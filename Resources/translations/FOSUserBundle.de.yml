@@ -1,0 +1,15 @@
+email_update:
+     flash:
+         info: 'Bitte überprüfen Sie das Postfach der neuen Email-Adresse und klicken Sie den Link im Bestätigungsmail.'
+         success: 'Email-Adresse wurde erfolgreich aktualisiert.'
+     error:
+         message: 'Ungültiger Bestätigungslink. Email-Adresse konnte nicht aktualisiert werden.'
+     email:
+         subject: 'Neue Email-Adresse Aktivierung bestätigen.'
+         message: |
+             Hallo %username%!
+
+             Um Ihre neue Email-Adresse zu aktivieren, besuchen Sie bitten den folgenden Link: %confirmationUrl%
+
+             Freundliche Grüße,
+             das Team.

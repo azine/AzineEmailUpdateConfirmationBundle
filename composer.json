@@ -1,0 +1,35 @@
+{
+    "name": "azine/emailupdateconfirmation-bundle",
+    "type": "symfony-bundle",
+    "description": "Symfony bundle to confirm user`s email update, based on FosUSerBundle functionality ",
+    "keywords": ["email", "update", "confirm", "email update confirmation"],
+    "homepage": "https://github.com/azine/AzineEmailUpdateConfirmationBundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Azine IT Services AG",
+            "email": "github@azine-it.ch"
+        }
+    ],
+    "config": {
+        "process-timeout": 590,
+        "github-protocols": ["https", "git", "ssh"],
+        "github-domains": ["github.com"]
+    },
+    "require": {
+        "php": ">=5.6.0",
+        "symfony/framework-bundle": ">2.7",
+        "symfony/console": ">2.7",
+        "symfony/finder": ">2.7",
+        "monolog/monolog": "~1.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit":  "~5.0",
+        "friendsofphp/php-cs-fixer": "^2.2"
+    },
+    "autoload": {
+        "psr-0": { "Azine\\HybridAuthBundle": "" }
+    },
+    "minimum-stability": "dev",
+    "target-dir": "Azine/HybridAuthBundle"
+}

@@ -1,0 +1,48 @@
+services:
+    email_update_confirmation:
+        class: Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation
+        arguments:
+            $router: "@router"
+            $tokenGenerator: "@fos_user.util.token_generator"
+            $mailer: "@azine.email_update.mailer"
+            $emailEncryption: "@email_encryption"
+            $eventDispatcher: "@event_dispatcher"
+            $redirectRoute: "%azine_email_update_confirmation.redirect_route%"
+
+    email_encryption:
+        class: Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption
+        arguments: ["@validator", "%azine_email_update_confirmation.cypher_method%"]
+
+    azine.email_update.mailer:
+        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer
+        arguments:
+            $mailer: "@mailer"
+            $router: "@router"
+            $templating: "@templating"
+            $parameters:
+                azine_email_update_confirmation.template: '%azine_email_update_confirmation.template%'
+                from_email: '%fos_user.resetting.email.from_email%'
+
+    email_update_listener:
+        class: Azine\EmailUpdateConfirmationBundle\Doctrine\EmailUpdateListener
+        arguments: ["@email_update_confirmation", "@request_stack", "@fos_user.util.canonical_fields_updater", "@email_encryption", "@event_dispatcher"]
+        tags:
+            - { name: doctrine.event_listener, event: preUpdate, lazy: true }
+
+    Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController:
+        class: Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController
+        arguments:
+            $eventDispatcher: "@event_dispatcher"
+            $userManager: "@fos_user.user_manager"
+            $emailUpdateConfirmation: "@email_update_confirmation"
+            $translator: "@translator"
+            $canonicalFieldsUpdater: "@fos_user.util.canonical_fields_updater"
+        calls:
+            - [setContainer, ["@service_container"]]
+        public: true
+
+    email_update_flash_subscriber:
+        class: Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener
+        arguments: ['@session', '@translator']
+        tags:
+            - { name: kernel.event_subscriber }

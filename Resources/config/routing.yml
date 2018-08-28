@@ -1,0 +1,3 @@
+user_update_email_confirm:
+    path: /{_locale}/confirm-email-update/{token}/{redirectRoute}
+    defaults: { _controller: AzineEmailUpdateConfirmationBundle:ConfirmEmailUpdate:confirmEmailUpdate }
