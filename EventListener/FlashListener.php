@@ -2,7 +2,6 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\EventListener;
 
-use FOS\UserBundle\FOSUserEvents;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Session\Session;

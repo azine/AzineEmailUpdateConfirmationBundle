@@ -2,9 +2,8 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Mailer;
 
-use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Mailer\TwigSwiftMailer;
-
+use FOS\UserBundle\Model\UserInterface;
 
 class AzineTwigSwiftMailer extends TwigSwiftMailer
 {

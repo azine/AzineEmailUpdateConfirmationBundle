@@ -2,10 +2,10 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Tests;
 
-use FOS\UserBundle\Mailer\MailerInterface;
-use FOS\UserBundle\Model\User;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
+use FOS\UserBundle\Mailer\MailerInterface;
+use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Util\TokenGenerator;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -28,6 +28,8 @@ class EmailUpdateConfirmationTest extends TestCase
     private $emailEncryption;
     /** @var EventDispatcher */
     private $eventDispatcher;
+    /** @var string */
+    private $redirectRoute = 'redirect_route';
     /** @var EmailUpdateConfirmation */
     private $emailUpdateConfirmation;
     /** @var User */
@@ -58,7 +60,7 @@ class EmailUpdateConfirmationTest extends TestCase
         $this->emailEncryption = new EmailEncryption($this->emailValidator, $this->cypher_method);
         $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
 
-        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->emailEncryption, $this->eventDispatcher);
+        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->emailEncryption, $this->eventDispatcher, $this->redirectRoute);
         $this->user->expects($this->any())
             ->method('getConfirmationToken')
             ->will($this->returnValue('test_token'));

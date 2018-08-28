@@ -2,11 +2,12 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Doctrine;
 
+use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use FOS\UserBundle\Model\UserInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
 use Symfony\Component\HttpFoundation\RequestStack;
+
 /**
  * Class EmailUpdateListener.
  */
@@ -24,6 +25,7 @@ class EmailUpdateListener
      * @var CanonicalFieldsUpdater
      */
     private $canonicalFieldsUpdater;
+
     /**
      * Constructor.
      *
@@ -37,6 +39,7 @@ class EmailUpdateListener
         $this->requestStack = $requestStack;
         $this->canonicalFieldsUpdater = $canonicalFieldsUpdater;
     }
+
     /**
      * Pre update listener based on doctrine common.
      *

@@ -7,8 +7,8 @@ use FOS\UserBundle\Model\UserInterface;
 
 class AzineUpdateEmailMailer extends Mailer
 {
-
     //I am not sure such extending of Mailer is a good decision
+
     /**
      * Send confirmation link to specified new user email.
      *

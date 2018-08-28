@@ -1,7 +1,7 @@
 {
     "name": "azine/emailupdateconfirmation-bundle",
     "type": "symfony-bundle",
-    "description": "Symfony bundle to confirm user`s email update, based on FosUSerBundle functionality ",
+    "description": "Symfony bundle to require the user to confirm her update email address by clicking on a link sent to the new address. This should be part of the FriendsOfSymfony/UserBundle, but was not accepted as new feature by a maintainer.",
     "keywords": ["email", "update", "confirm", "email update confirmation"],
     "homepage": "https://github.com/azine/AzineEmailUpdateConfirmationBundle",
     "license": "MIT",
@@ -18,18 +18,20 @@
     },
     "require": {
         "php": ">=5.6.0",
-        "symfony/framework-bundle": ">2.7",
-        "symfony/console": ">2.7",
-        "symfony/finder": ">2.7",
-        "monolog/monolog": "~1.6"
+        "symfony/framework-bundle": "~2.7,>=2.7|~3.0",
+        "symfony/console": "~2.7,>=2.7|~3.0",
+        "symfony/finder": "~2.7,>=2.7|~3.0",
+        "friendsofsymfony/user-bundle": "~2.0",
+        "monolog/monolog": "~1.6,>=1.6.0"
     },
     "require-dev": {
+        "symfony/translation": "~2.7,>=2.7|~3.0",
         "phpunit/phpunit":  "~5.0",
         "friendsofphp/php-cs-fixer": "^2.2"
     },
     "autoload": {
-        "psr-0": { "Azine\\HybridAuthBundle": "" }
+        "psr-0": { "Azine\\EmailUpdateConfirmationBundle": "" }
     },
     "minimum-stability": "dev",
-    "target-dir": "Azine/HybridAuthBundle"
+    "target-dir": "Azine/EmailUpdateConfirmationBundle"
 }

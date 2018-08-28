@@ -3,12 +3,11 @@
 namespace Azine\EmailUpdateConfirmationBundle\Controller;
 
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
+use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Event\UserEvent;
-use FOS\UserBundle\FOSUserEvents;
 use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;

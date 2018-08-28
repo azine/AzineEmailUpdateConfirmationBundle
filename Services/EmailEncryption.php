@@ -2,7 +2,6 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
-use Azine\EmailUpdateConfirmationBundle\Services\EmailEncryptionInterface;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;

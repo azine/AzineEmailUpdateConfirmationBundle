@@ -2,15 +2,15 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader;
+use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
  * This is the class that loads and manages your bundle configuration.
  *
- * @link http://symfony.com/doc/current/cookbook/bundles/extension.html
+ * @see http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
 class AzineEmailUpdateConfirmationExtension extends Extension
 {
@@ -25,12 +25,10 @@ class AzineEmailUpdateConfirmationExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 
         if ($config['enabled']) {
-
             $loader->load('services.yml');
             $container->setParameter('azine_email_update_confirmation.template', $config['email_template']);
             $container->setParameter('azine_email_update_confirmation.cypher_method', $config['cypher_method']);
             $container->setParameter('azine_email_update_confirmation.redirect_route', $config['redirect_route']);
-
         }
     }
 }

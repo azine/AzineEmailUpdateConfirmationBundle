@@ -3,19 +3,14 @@
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
-use Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer;
 use FOS\UserBundle\Event\UserEvent;
-use FOS\UserBundle\FOSUserEvents;
 use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\UserInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailEncryptionInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmationInterface;
 use FOS\UserBundle\Util\TokenGenerator;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Routing\RouterInterface;
 
 class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 {
@@ -46,7 +41,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
     public function __construct(
         Router $router,
         TokenGenerator $tokenGenerator,
-        AzineUpdateEmailMailer $mailer,
+        MailerInterface $mailer,
         EmailEncryptionInterface $emailEncryption,
         EventDispatcherInterface $eventDispatcher,
         $redirectRoute
@@ -84,7 +79,6 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
         );
 
         $encryptedEmail = $this->emailEncryption->encryptEmailValue();
-
 
         $confirmationParams = array('token' => $this->user->getConfirmationToken(), 'target' => $encryptedEmail, 'redirectRoute' => $this->redirectRoute);
 
