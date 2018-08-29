@@ -3,11 +3,10 @@
 namespace Azine\EmailUpdateConfirmationBundle\Tests;
 
 use Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class EmailEncryptionTest extends TestCase
+class EmailEncryptionTest extends \PHPUnit_Framework_TestCase
 {
     /** @var ValidatorInterface */
     private $emailValidator;
