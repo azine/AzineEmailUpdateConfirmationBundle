@@ -26,6 +26,7 @@
     },
     "require-dev": {
         "symfony/translation": "~2.7,>=2.7|~3.0",
+        "symfony/validator": "^2.7",
         "phpunit/phpunit":  "~5.0",
         "friendsofphp/php-cs-fixer": "^2.2"
     },

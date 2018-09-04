@@ -7,14 +7,13 @@ use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Util\TokenGenerator;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class EmailUpdateConfirmationTest extends TestCase
+class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
 {
     /** @var ExpressionFunctionProviderInterface */
     private $provider;
