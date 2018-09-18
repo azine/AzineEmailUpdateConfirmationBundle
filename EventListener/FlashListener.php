@@ -2,6 +2,7 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\EventListener;
 
+use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -9,16 +10,12 @@ use Symfony\Component\Translation\TranslatorInterface;
 
 class FlashListener implements EventSubscriberInterface
 {
-    // In FOsUSerBundle these constants are the part of a separate Class with all events, should I create a class for them?
-    const EMAIL_UPDATE_SUCCESS = 'fos_user.update_email.success';
-    const EMAIL_UPDATE_INITIALIZE = 'fos_user.update_email.initialize';
-
     /**
      * @var string[]
      */
     private static $successMessages = array(
-        self::EMAIL_UPDATE_SUCCESS => 'email_update.flash.success',
-        self::EMAIL_UPDATE_INITIALIZE => 'email_update.flash.info',
+        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS => 'email_update.flash.success',
+        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE => 'email_update.flash.info',
     );
 
     /**
@@ -48,8 +45,8 @@ class FlashListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            self::EMAIL_UPDATE_SUCCESS => 'addSuccessFlash',
-            self::EMAIL_UPDATE_INITIALIZE => 'addInfoFlash',
+            AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS => 'addSuccessFlash',
+            AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE => 'addInfoFlash',
         );
     }
 

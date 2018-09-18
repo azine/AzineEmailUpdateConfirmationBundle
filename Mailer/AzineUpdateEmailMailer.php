@@ -5,10 +5,8 @@ namespace Azine\EmailUpdateConfirmationBundle\Mailer;
 use FOS\UserBundle\Mailer\Mailer;
 use FOS\UserBundle\Model\UserInterface;
 
-class AzineUpdateEmailMailer extends Mailer
+class AzineUpdateEmailMailer extends Mailer implements EmailUpdateConfirmationMailerInterface
 {
-    //I am not sure such extending of Mailer is a good decision
-
     /**
      * Send confirmation link to specified new user email.
      *

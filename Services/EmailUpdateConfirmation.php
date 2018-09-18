@@ -3,6 +3,7 @@
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
+use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use FOS\UserBundle\Event\UserEvent;
 use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\UserInterface;
@@ -41,7 +42,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
     public function __construct(
         Router $router,
         TokenGenerator $tokenGenerator,
-        MailerInterface $mailer,
+        EmailUpdateConfirmationMailerInterface $mailer,
         EmailEncryptionInterface $emailEncryption,
         EventDispatcherInterface $eventDispatcher,
         $redirectRoute

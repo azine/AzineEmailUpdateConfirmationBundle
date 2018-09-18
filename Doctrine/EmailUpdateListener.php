@@ -2,6 +2,7 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Doctrine;
 
+use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use FOS\UserBundle\Model\UserInterface;
@@ -25,6 +26,10 @@ class EmailUpdateListener
      * @var CanonicalFieldsUpdater
      */
     private $canonicalFieldsUpdater;
+    /**
+     * @var EmailUpdateConfirmationMailerInterface
+     */
+    private $mailer;
 
     /**
      * Constructor.
@@ -32,12 +37,14 @@ class EmailUpdateListener
      * @param EmailUpdateConfirmation $emailUpdateConfirmation
      * @param RequestStack            $requestStack
      * @param CanonicalFieldsUpdater  $canonicalFieldsUpdater
+     * @param EmailUpdateConfirmationMailerInterface         $mailer
      */
-    public function __construct(EmailUpdateConfirmation $emailUpdateConfirmation, RequestStack $requestStack, CanonicalFieldsUpdater $canonicalFieldsUpdater)
+    public function __construct(EmailUpdateConfirmation $emailUpdateConfirmation, RequestStack $requestStack, CanonicalFieldsUpdater $canonicalFieldsUpdater, EmailUpdateConfirmationMailerInterface $mailer)
     {
         $this->emailUpdateConfirmation = $emailUpdateConfirmation;
         $this->requestStack = $requestStack;
         $this->canonicalFieldsUpdater = $canonicalFieldsUpdater;
+        $this->mailer = $mailer;
     }
 
     /**
@@ -48,7 +55,7 @@ class EmailUpdateListener
     public function preUpdate(PreUpdateEventArgs $args)
     {
         $object = $args->getObject();
-        if ($object instanceof UserInterface && $args instanceof PreUpdateEventArgs) {
+        if ($object instanceof UserInterface) {
             $user = $object;
             if ($user->getConfirmationToken() != $this->emailUpdateConfirmation->getEmailConfirmedToken() && isset($args->getEntityChangeSet()['email'])) {
                 $oldEmail = $args->getEntityChangeSet()['email'][0];
@@ -59,7 +66,7 @@ class EmailUpdateListener
                 $this->emailUpdateConfirmation->setUser($user);
                 $this->emailUpdateConfirmation->setEmail($newEmail);
                 $this->emailUpdateConfirmation->setConfirmationRoute('user_update_email_confirm');
-                $this->emailUpdateConfirmation->getMailer()->sendUpdateEmailConfirmation(
+                $this->mailer->sendUpdateEmailConfirmation(
                     $user,
                     $this->emailUpdateConfirmation->generateConfirmationLink($this->requestStack->getCurrentRequest()),
                     $newEmail

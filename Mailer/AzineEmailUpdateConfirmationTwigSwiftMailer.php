@@ -5,10 +5,8 @@ namespace Azine\EmailUpdateConfirmationBundle\Mailer;
 use FOS\UserBundle\Mailer\TwigSwiftMailer;
 use FOS\UserBundle\Model\UserInterface;
 
-class AzineTwigSwiftMailer extends TwigSwiftMailer
+class AzineEmailUpdateConfirmationTwigSwiftMailer extends TwigSwiftMailer implements EmailUpdateConfirmationMailerInterface
 {
-    //I am not sure such extending of Mailer is a good decision
-
     /**
      * Send confirmation link to specified new user email.
      *
