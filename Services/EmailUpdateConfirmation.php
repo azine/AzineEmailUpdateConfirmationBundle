@@ -2,6 +2,7 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
+use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use FOS\UserBundle\Event\UserEvent;
@@ -85,7 +86,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
         $event = new UserEvent($this->user, $request);
 
-        $this->eventDispatcher->dispatch(FlashListener::EMAIL_UPDATE_INITIALIZE, $event);
+        $this->eventDispatcher->dispatch(AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE, $event);
 
         return $this->router->generate(
             $this->confirmationRoute,

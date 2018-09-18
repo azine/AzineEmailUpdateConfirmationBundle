@@ -2,6 +2,7 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Tests\EventListener;
 
+use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Symfony\Component\EventDispatcher\Event;
 
@@ -32,11 +33,11 @@ class FlashListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testAddSuccessFlash()
     {
-        $this->listener->addSuccessFlash($this->event, FlashListener::EMAIL_UPDATE_SUCCESS);
+        $this->listener->addSuccessFlash($this->event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
     }
 
     public function testAddInfoFlash()
     {
-        $this->listener->addInfoFlash($this->event, FlashListener::EMAIL_UPDATE_INITIALIZE);
+        $this->listener->addInfoFlash($this->event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Controller;
 
+use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Event\UserEvent;
@@ -75,7 +76,7 @@ class ConfirmEmailUpdateController extends Controller
         $this->userManager->updateUser($user);
 
         $event = new UserEvent($user, $request);
-        $this->eventDispatcher->dispatch(FlashListener::EMAIL_UPDATE_SUCCESS, $event);
+        $this->eventDispatcher->dispatch(AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS, $event);
 
         return $this->redirect($this->generateUrl($redirectRoute));
     }
