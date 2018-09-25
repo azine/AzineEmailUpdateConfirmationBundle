@@ -62,9 +62,7 @@ class ConfirmEmailUpdateController extends Controller
             throw new AccessDeniedException($this->translator->trans('email_update.error.message', array(), 'FOSUserBundle'));
         }
 
-        $this->emailUpdateConfirmation->setUser($user);
-
-        $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($request->get('target'));
+        $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $request->get('target'));
 
         // Update user email
         if ($newEmail) {

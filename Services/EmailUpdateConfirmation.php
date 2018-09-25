@@ -13,6 +13,8 @@ use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 {
@@ -21,22 +23,21 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
     private $mailer;
     private $router;
     private $tokenGenerator;
-    private $emailEncryption;
 
     /**
-     * @var UserInterface
+     * @var string
      */
-    private $user;
+    private $encryptionMode;
 
     /**
-     * @var string Email to be confirmed
+     * @var ValidatorInterface
      */
-    private $email;
+    private $validator;
 
     /**
      * @var string Route for confirmation link
      */
-    private $confirmationRoute;
+    private $confirmationRoute = 'user_update_email_confirm';
     private $eventDispatcher;
     private $redirectRoute;
 
@@ -44,16 +45,22 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
         Router $router,
         TokenGenerator $tokenGenerator,
         EmailUpdateConfirmationMailerInterface $mailer,
-        EmailEncryptionInterface $emailEncryption,
         EventDispatcherInterface $eventDispatcher,
-        $redirectRoute
+        ValidatorInterface $validator,
+        $redirectRoute,
+        $mode = null
     ) {
         $this->router = $router;
         $this->tokenGenerator = $tokenGenerator;
         $this->mailer = $mailer;
-        $this->emailEncryption = $emailEncryption;
         $this->eventDispatcher = $eventDispatcher;
+        $this->validator = $validator;
         $this->redirectRoute = $redirectRoute;
+
+        if (!$mode) {
+            $mode = openssl_get_cipher_methods(false)[0];
+        }
+        $this->encryptionMode = $mode;
     }
 
     /**
@@ -74,17 +81,26 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
      *
      * @return string
      */
-    public function generateConfirmationLink(Request $request)
+    public function generateConfirmationLink(Request $request, UserInterface $user, $email)
     {
-        $this->emailEncryption->setUserConfirmationToken(
-            $this->getUserConfirmationToken()
-        );
+        if (!is_string($email)) {
+            throw new \InvalidArgumentException(
+                'Email to be encrypted should a string. '
+                .gettype($email).' given.'
+            );
+        }
 
-        $encryptedEmail = $this->emailEncryption->encryptEmailValue();
+        if (!$user->getConfirmationToken()) {
+            $user->setConfirmationToken(
+                $this->tokenGenerator->generateToken()
+            );
+        }
 
-        $confirmationParams = array('token' => $this->user->getConfirmationToken(), 'target' => $encryptedEmail, 'redirectRoute' => $this->redirectRoute);
+        $encryptedEmail = $this->encryptEmailValue($user->getConfirmationToken(), $email);
 
-        $event = new UserEvent($this->user, $request);
+        $confirmationParams = array('token' => $user->getConfirmationToken(), 'target' => $encryptedEmail, 'redirectRoute' => $this->redirectRoute);
+
+        $event = new UserEvent($user, $request);
 
         $this->eventDispatcher->dispatch(AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE, $event);
 
@@ -97,69 +113,19 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
     /**
      * Fetch email value from hashed part of confirmation link.
-     *
+     * @param UserInterface $user
      * @param string $hashedEmail
      *
      * @return string Encrypted email
      */
-    public function fetchEncryptedEmailFromConfirmationLink($hashedEmail)
+    public function fetchEncryptedEmailFromConfirmationLink($user, $hashedEmail)
     {
         //replace spaces with plus sign from hash, which could be replaced in url
         $hashedEmail = str_replace(' ', '+', $hashedEmail);
 
-        $this->emailEncryption->setUserConfirmationToken(
-            $this->getUserConfirmationToken()
-        );
-
-        $email = $this->emailEncryption->decryptEmailValue($hashedEmail);
+        $email = $this->decryptEmailValue($user->getConfirmationToken(), $hashedEmail);
 
         return $email;
-    }
-
-    /**
-     * Set user class instance.
-     *
-     * @param UserInterface $user
-     *
-     * @return $this
-     */
-    public function setUser(UserInterface $user)
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * Set new user email to be confirmed. Email value should be already
-     * validated.
-     *
-     * @param string $email
-     *
-     * @return $this
-     */
-    public function setEmail($email)
-    {
-        $this->email = $email;
-
-        $this->emailEncryption->setEmail($this->email);
-
-        return $this;
-    }
-
-    /**
-     * Set route to be used for confirmation ling generation. This route should
-     * contain path to confirmation action.
-     *
-     * @param string $confirmationRoute
-     *
-     * @return $this
-     */
-    public function setConfirmationRoute($confirmationRoute)
-    {
-        $this->confirmationRoute = $confirmationRoute;
-
-        return $this;
     }
 
     /**
@@ -173,19 +139,78 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
     }
 
     /**
-     * Get or create new user confirmation token.
+     * Return IV size.
      *
-     * @return string
+     * @return int
      */
-    protected function getUserConfirmationToken()
+    protected function getIvSize()
     {
-        // Generate new token if it's not set
-        if (!$this->user->getConfirmationToken()) {
-            $this->user->setConfirmationToken(
-                $this->tokenGenerator->generateToken()
+        return openssl_cipher_iv_length($this->encryptionMode);
+    }
+
+    /**
+     * Encrypt email value with specified user confirmation token.
+     *
+     * @return string Encrypted email
+     */
+    public function encryptEmailValue($userConfirmationToken, $email)
+    {
+        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
+            throw new \InvalidArgumentException(
+                'Invalid user confirmation token value.'
             );
         }
 
-        return $this->user->getConfirmationToken();
+        $iv = openssl_random_pseudo_bytes($this->getIvSize());
+
+        $encryptedEmail = openssl_encrypt(
+            $email,
+            $this->encryptionMode,
+            $userConfirmationToken,
+            0,
+            $iv
+        );
+
+        $encryptedEmail = base64_encode($iv.$encryptedEmail);
+
+        return $encryptedEmail;
+    }
+
+    /**
+     * Decrypt email value with specified user confirmation token.
+     * @param string $userConfirmationToken
+     * @param string $encryptedEmail
+     *
+     * @return string Decrypted email
+     */
+    public function decryptEmailValue($userConfirmationToken, $encryptedEmail)
+    {
+        $b64DecodedEmailHash = base64_decode($encryptedEmail);
+        $ivSize = $this->getIvSize();
+
+        // Select IV part from encrypted value
+        $iv = substr($b64DecodedEmailHash, 0, $ivSize);
+
+        // Select email part from encrypted value
+        $preparedEncryptedEmail = substr($b64DecodedEmailHash, $ivSize);
+
+        $decryptedEmail = openssl_decrypt(
+            $preparedEncryptedEmail,
+            $this->encryptionMode,
+            $userConfirmationToken,
+            0,
+            $iv
+        );
+
+        // Trim decrypted email from nul byte before return
+        $email = rtrim($decryptedEmail, "\0");
+
+        /** @var ConstraintViolationList $violationList */
+        $violationList = $this->validator->validate($email, new Email());
+        if ($violationList->count() > 0) {
+            throw new \InvalidArgumentException('Wrong email format was provided for decryptEmailValue function');
+        }
+
+        return $email;
     }
 }

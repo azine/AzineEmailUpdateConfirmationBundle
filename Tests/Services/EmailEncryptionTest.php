@@ -19,32 +19,6 @@ class EmailEncryptionTest extends \PHPUnit_Framework_TestCase
         $this->constraintViolationList = new ConstraintViolationList(array($this->getMockBuilder('Symfony\Component\Validator\ConstraintViolation')->disableOriginalConstructor()->getMock()));
     }
 
-    public function testEncryptDecryptEmail()
-    {
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
-        $this->constraintViolationList->remove(0);
-        $emailEncryption = new EmailEncryption($this->emailValidator);
-        $emailEncryption->setEmail('foo@example.com');
-        $emailEncryption->setUserConfirmationToken('test_token');
-
-        $encryptedEmail = $emailEncryption->encryptEmailValue();
-        $this->assertSame('foo@example.com', $emailEncryption->decryptEmailValue($encryptedEmail));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testDecryptFromWrongEmailFormat()
-    {
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
-        $emailEncryption = new EmailEncryption($this->emailValidator);
-        $emailEncryption->setEmail('fooexample.com');
-        $emailEncryption->setUserConfirmationToken('test_token');
-
-        $encryptedEmail = $emailEncryption->encryptEmailValue();
-        $emailEncryption->decryptEmailValue($encryptedEmail);
-    }
-
     /**
      * @expectedException \InvalidArgumentException
      */

@@ -5,13 +5,10 @@ services:
             $router: "@router"
             $tokenGenerator: "@fos_user.util.token_generator"
             $mailer: "@azine.email_update.mailer"
-            $emailEncryption: "@email_encryption"
             $eventDispatcher: "@event_dispatcher"
+            $validator: "@validator"
             $redirectRoute: "%azine_email_update_confirmation.redirect_route%"
-
-    email_encryption:
-        class: Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption
-        arguments: ["@validator", "%azine_email_update_confirmation.cypher_method%"]
+            $mode: "%azine_email_update_confirmation.cypher_method%"
 
     azine.email_update.mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer

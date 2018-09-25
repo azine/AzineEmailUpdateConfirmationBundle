@@ -62,13 +62,10 @@ class EmailUpdateListener
                 $newEmail = $args->getEntityChangeSet()['email'][1];
                 $user->setEmail($oldEmail);
                 $user->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($oldEmail));
-                // Configure email confirmation
-                $this->emailUpdateConfirmation->setUser($user);
-                $this->emailUpdateConfirmation->setEmail($newEmail);
-                $this->emailUpdateConfirmation->setConfirmationRoute('user_update_email_confirm');
+
                 $this->mailer->sendUpdateEmailConfirmation(
                     $user,
-                    $this->emailUpdateConfirmation->generateConfirmationLink($this->requestStack->getCurrentRequest()),
+                    $this->emailUpdateConfirmation->generateConfirmationLink($this->requestStack->getCurrentRequest(), $user, $newEmail),
                     $newEmail
                 );
             }

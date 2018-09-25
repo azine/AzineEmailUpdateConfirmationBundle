@@ -29,8 +29,12 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
     private $eventDispatcher;
     /** @var string */
     private $redirectRoute = 'redirect_route';
+    /** @var string */
+    private $token = 'test_token';
     /** @var EmailUpdateConfirmation */
     private $emailUpdateConfirmation;
+    /** @var string */
+    private $emailTest = 'foo@example.com';
     /** @var User */
     private $user;
     private $cypher_method = 'AES-128-CBC';
@@ -59,22 +63,39 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
         $this->emailEncryption = new EmailEncryption($this->emailValidator, $this->cypher_method);
         $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
 
-        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->emailEncryption, $this->eventDispatcher, $this->redirectRoute);
+        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->eventDispatcher, $this->emailValidator, $this->redirectRoute, $this->cypher_method);
+
         $this->user->expects($this->any())
             ->method('getConfirmationToken')
-            ->will($this->returnValue('test_token'));
-        $this->emailUpdateConfirmation->setUser($this->user);
+            ->will($this->returnValue($this->token));
     }
 
     public function testFetchEncryptedEmailFromConfirmationLinkMethod()
     {
-        $emailEncryption = new EmailEncryption($this->emailValidator, $this->cypher_method);
-        $emailEncryption->setEmail('foo@example.com');
-        $emailEncryption->setUserConfirmationToken('test_token');
+        $this->emailTest = 'foo@example.com';
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->token, $this->emailTest);
 
-        $encryptedEmail = $emailEncryption->encryptEmailValue();
+        $email = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($this->user, $encryptedEmail);
+        $this->assertSame($this->emailTest, $email);
+    }
 
-        $email = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($encryptedEmail);
-        $this->assertSame('foo@example.com', $email);
+    public function testEncryptDecryptEmail()
+    {
+        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+        $this->constraintViolationList->remove(0);
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $this->emailTest);
+        $this->assertSame($this->emailTest, $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testDecryptFromWrongEmailFormat()
+    {
+        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+        $wrongEmail ='fooexample.com';
+
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $wrongEmail);
+        $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail);
     }
 }
