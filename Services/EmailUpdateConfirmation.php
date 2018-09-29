@@ -20,8 +20,19 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 {
     const EMAIL_CONFIRMED = 'email_confirmed';
 
+    /**
+     * @var EmailUpdateConfirmationMailerInterface
+     */
     private $mailer;
+
+    /**
+     * @var Router
+     */
     private $router;
+
+    /**
+     * @var TokenGenerator
+     */
     private $tokenGenerator;
 
     /**
@@ -38,7 +49,15 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
      * @var string Route for confirmation link
      */
     private $confirmationRoute = 'user_update_email_confirm';
+
+    /**
+     * @var EventDispatcherInterface
+     */
     private $eventDispatcher;
+
+    /**
+     * @var string $redirectRoute
+     */
     private $redirectRoute;
 
     public function __construct(
@@ -83,13 +102,6 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
      */
     public function generateConfirmationLink(Request $request, UserInterface $user, $email)
     {
-        if (!is_string($email)) {
-            throw new \InvalidArgumentException(
-                'Email to be encrypted should a string. '
-                .gettype($email).' given.'
-            );
-        }
-
         if (!$user->getConfirmationToken()) {
             $user->setConfirmationToken(
                 $this->tokenGenerator->generateToken()
@@ -150,6 +162,8 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
     /**
      * Encrypt email value with specified user confirmation token.
+     * @param string $userConfirmationToken
+     * @param string $email
      *
      * @return string Encrypted email
      */
@@ -161,12 +175,19 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
             );
         }
 
+        if (!is_string($email)) {
+            throw new \InvalidArgumentException(
+                'Email to be encrypted should a string. '
+                .gettype($email).' given.'
+            );
+        }
+
         $iv = openssl_random_pseudo_bytes($this->getIvSize());
 
         $encryptedEmail = openssl_encrypt(
             $email,
             $this->encryptionMode,
-            $userConfirmationToken,
+            pack('H*', hash('sha256', $userConfirmationToken)),
             0,
             $iv
         );
@@ -185,6 +206,12 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
      */
     public function decryptEmailValue($userConfirmationToken, $encryptedEmail)
     {
+        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
+            throw new \InvalidArgumentException(
+                'Invalid user confirmation token value.'
+            );
+        }
+
         $b64DecodedEmailHash = base64_decode($encryptedEmail);
         $ivSize = $this->getIvSize();
 
@@ -197,7 +224,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
         $decryptedEmail = openssl_decrypt(
             $preparedEncryptedEmail,
             $this->encryptionMode,
-            $userConfirmationToken,
+            pack('H*', hash('sha256', $userConfirmationToken)),
             0,
             $iv
         );

@@ -83,6 +83,6 @@ class FlashListener implements EventSubscriberInterface
      */
     private function trans($message, array $params = array())
     {
-        return $this->translator->trans($message, $params, 'FOSUserBundle');
+        return $this->translator->trans($message, $params);
     }
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="ru" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="b4Sslaz" resname="email_update.flash.info">
+        <source>email_update.flash.info</source>
+        <target>Пожалуйста, проверьте ваш новый почтовый ящик и перейдите по ссылке из письма для подтверждения изменений</target>
+      </trans-unit>
+      <trans-unit id="5HrMZ9L" resname="email_update.flash.success">
+        <source>email_update.flash.success</source>
+        <target>Адрес электронной почты изменён</target>
+      </trans-unit>
+      <trans-unit id="Ku728Ng" resname="email_update.error.message">
+        <source>email_update.error.message</source>
+        <target>Ссылка для подтверждения E-mail не действительна. Не удалось обновить адрес электронной почты</target>
+      </trans-unit>
+      <trans-unit id="jpQGcUm" resname="email_update.email.subject">
+        <source>email_update.email.subject</source>
+        <target>Подтвердите изменение адреса электронной почты.</target>
+      </trans-unit>
+      <trans-unit id="esAUBv_" resname="email_update.email.message">
+        <source>email_update.email.message</source>
+        <target>Приветствуем, %username%!
+
+Для изменения адреса электронной почты пройдите по ссылке %confirmationUrl%
+
+С наилучшими пожеланиями,
+команда сайта.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

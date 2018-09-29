@@ -23,10 +23,30 @@ use Symfony\Component\Translation\TranslatorInterface;
  */
 class ConfirmEmailUpdateController extends Controller
 {
+
+    /**
+     * @var EventDispatcherInterface
+     */
     private $eventDispatcher;
+
+    /**
+     * @var UserManagerInterface
+     */
     private $userManager;
+
+    /**
+     * @var EmailUpdateConfirmation
+     */
     private $emailUpdateConfirmation;
+
+    /**
+     * @var TranslatorInterface
+     */
     private $translator;
+
+    /**
+     * @var CanonicalFieldsUpdater
+     */
     private $canonicalFieldsUpdater;
 
     public function __construct(EventDispatcherInterface $eventDispatcher, UserManagerInterface $userManager, EmailUpdateConfirmation $emailUpdateConfirmation, TranslatorInterface $translator, CanonicalFieldsUpdater $canonicalFieldsUpdater)
@@ -54,12 +74,12 @@ class ConfirmEmailUpdateController extends Controller
 
         // If user was not found throw 404 exception
         if (!$user) {
-            throw $this->createNotFoundException($this->translator->trans('email_update.error.message', array(), 'FOSUserBundle'));
+            throw $this->createNotFoundException($this->translator->trans('email_update.error.message'));
         }
 
         // Show invalid token message if the user id found via token does not match the current users id (e.g. anon. or other user)
         if (!($this->getUser() instanceof UserInterface) || ($user->getId() !== $this->getUser()->getId())) {
-            throw new AccessDeniedException($this->translator->trans('email_update.error.message', array(), 'FOSUserBundle'));
+            throw new AccessDeniedException($this->translator->trans('email_update.error.message'));
         }
 
         $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $request->get('target'));
