@@ -3,7 +3,6 @@
 namespace Azine\EmailUpdateConfirmationBundle\Controller;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
-use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Event\UserEvent;
 use FOS\UserBundle\Model\User;
@@ -23,7 +22,6 @@ use Symfony\Component\Translation\TranslatorInterface;
  */
 class ConfirmEmailUpdateController extends Controller
 {
-
     /**
      * @var EventDispatcherInterface
      */

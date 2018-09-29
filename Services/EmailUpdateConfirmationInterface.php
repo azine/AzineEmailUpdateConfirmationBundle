@@ -11,7 +11,7 @@ interface EmailUpdateConfirmationInterface
 {
     /**
      * @param UserInterface $user
-     * @param string $hashedEmail
+     * @param string        $hashedEmail
      *
      * @return string
      */
@@ -20,6 +20,7 @@ interface EmailUpdateConfirmationInterface
     /**
      * @param string $confirmationToken
      * @param string $email
+     *
      * @return string Encrypted email value
      */
     public function encryptEmailValue($confirmationToken, $email);

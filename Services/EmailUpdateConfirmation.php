@@ -3,7 +3,6 @@
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
-use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use FOS\UserBundle\Event\UserEvent;
 use FOS\UserBundle\Mailer\MailerInterface;
@@ -56,7 +55,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
     private $eventDispatcher;
 
     /**
-     * @var string $redirectRoute
+     * @var string
      */
     private $redirectRoute;
 
@@ -125,8 +124,9 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
     /**
      * Fetch email value from hashed part of confirmation link.
+     *
      * @param UserInterface $user
-     * @param string $hashedEmail
+     * @param string        $hashedEmail
      *
      * @return string Encrypted email
      */
@@ -162,6 +162,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
     /**
      * Encrypt email value with specified user confirmation token.
+     *
      * @param string $userConfirmationToken
      * @param string $email
      *
@@ -199,6 +200,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
     /**
      * Decrypt email value with specified user confirmation token.
+     *
      * @param string $userConfirmationToken
      * @param string $encryptedEmail
      *

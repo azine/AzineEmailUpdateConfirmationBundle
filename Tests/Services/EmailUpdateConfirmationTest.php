@@ -89,7 +89,7 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
         $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
 
         $this->constraintViolationList->expects($this->once())->method('count')->will($this->returnValue(1));
-        $wrongEmail ='fooexample.com';
+        $wrongEmail = 'fooexample.com';
 
         $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $wrongEmail);
         $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail);

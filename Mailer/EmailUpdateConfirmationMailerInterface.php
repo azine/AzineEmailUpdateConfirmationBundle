@@ -14,5 +14,4 @@ interface EmailUpdateConfirmationMailerInterface
      * @param $toEmail
      */
     public function sendUpdateEmailConfirmation(UserInterface $user, $confirmationUrl, $toEmail);
-
 }

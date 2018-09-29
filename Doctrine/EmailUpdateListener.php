@@ -34,10 +34,10 @@ class EmailUpdateListener
     /**
      * Constructor.
      *
-     * @param EmailUpdateConfirmation $emailUpdateConfirmation
-     * @param RequestStack            $requestStack
-     * @param CanonicalFieldsUpdater  $canonicalFieldsUpdater
-     * @param EmailUpdateConfirmationMailerInterface         $mailer
+     * @param EmailUpdateConfirmation                $emailUpdateConfirmation
+     * @param RequestStack                           $requestStack
+     * @param CanonicalFieldsUpdater                 $canonicalFieldsUpdater
+     * @param EmailUpdateConfirmationMailerInterface $mailer
      */
     public function __construct(EmailUpdateConfirmation $emailUpdateConfirmation, RequestStack $requestStack, CanonicalFieldsUpdater $canonicalFieldsUpdater, EmailUpdateConfirmationMailerInterface $mailer)
     {
