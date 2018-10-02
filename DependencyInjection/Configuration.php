@@ -27,7 +27,9 @@ class Configuration implements ConfigurationInterface
         $rootNode->children()
                 ->booleanNode('enabled')->defaultFalse()->end()
                 ->scalarNode('cypher_method')->defaultNull()->end()
+                ->scalarNode('mailer')->defaultValue('azine.email_update.mailer')->end()
                 ->scalarNode('email_template')->defaultValue('@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig')->end()
+                ->scalarNode('from_email')->isRequired()->end()
                 ->scalarNode('redirect_route')->defaultValue('fos_user_profile_show')->end()
             ->end();
 

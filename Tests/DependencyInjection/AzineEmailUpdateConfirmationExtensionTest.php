@@ -13,6 +13,7 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestC
         $loader = new AzineEmailUpdateConfirmationExtension();
         $config = array();
         $config['enabled'] = false;
+        $config['from_email'] = 'test@example.com';
         $loader->load(array($config), $configuration);
 
         $this->assertFalse($configuration->hasDefinition('email_update_confirmation'));
@@ -30,6 +31,7 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestC
         $loader = new AzineEmailUpdateConfirmationExtension();
         $config = array();
         $config['enabled'] = true;
+        $config['from_email'] = 'test@example.com';
         $loader->load(array($config), $configuration);
 
         $this->assertTrue($configuration->hasDefinition('email_update_confirmation'));

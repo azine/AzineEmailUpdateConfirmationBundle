@@ -29,6 +29,9 @@ class AzineEmailUpdateConfirmationExtension extends Extension
             $container->setParameter('azine_email_update_confirmation.template', $config['email_template']);
             $container->setParameter('azine_email_update_confirmation.cypher_method', $config['cypher_method']);
             $container->setParameter('azine_email_update_confirmation.redirect_route', $config['redirect_route']);
+            $container->setParameter('azine_email_update_confirmation.from_email', $config['from_email']);
+
+            $container->setAlias('email_update.mailer', $config['mailer']);
         }
     }
 }

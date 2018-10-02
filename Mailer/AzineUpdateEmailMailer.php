@@ -16,12 +16,12 @@ class AzineUpdateEmailMailer extends Mailer implements EmailUpdateConfirmationMa
      */
     public function sendUpdateEmailConfirmation(UserInterface $user, $confirmationUrl, $toEmail)
     {
-        $template = $this->parameters['azine_email_update_confirmation.template'];
+        $template = $this->parameters['template']['email_updating'];
         $rendered = $this->templating->render($template, array(
             'user' => $user,
             'confirmationUrl' => $confirmationUrl,
         ));
 
-        $this->sendEmailMessage($rendered, $this->parameters['from_email'], $toEmail);
+        $this->sendEmailMessage($rendered, $this->parameters['from_email']['confirmation'], $toEmail);
     }
 }
