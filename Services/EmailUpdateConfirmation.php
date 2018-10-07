@@ -130,7 +130,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
      *
      * @return string Encrypted email
      */
-    public function fetchEncryptedEmailFromConfirmationLink($user, $hashedEmail)
+    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail)
     {
         //replace spaces with plus sign from hash, which could be replaced in url
         $hashedEmail = str_replace(' ', '+', $hashedEmail);

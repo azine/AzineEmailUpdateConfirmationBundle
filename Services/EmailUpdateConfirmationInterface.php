@@ -15,7 +15,7 @@ interface EmailUpdateConfirmationInterface
      *
      * @return string
      */
-    public function fetchEncryptedEmailFromConfirmationLink($user, $hashedEmail);
+    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail);
 
     /**
      * @param string $confirmationToken

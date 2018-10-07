@@ -11,16 +11,14 @@ services:
             $mode: "%azine_email_update_confirmation.cypher_method%"
 
     azine.email_update.mailer:
-        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer
+        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer
         arguments:
             $mailer: "@mailer"
             $router: "@router"
             $templating: "@templating"
             $parameters:
-                template:
-                  email_updating: '%azine_email_update_confirmation.template%'
-                from_email:
-                  confirmation: '%azine_email_update_confirmation.from_email%'
+                template: '%azine_email_update_confirmation.template%'
+                from_email: '%azine_email_update_confirmation.from_email%'
 
     azine.email_update.twig_mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationTwigSwiftMailer
@@ -29,10 +27,8 @@ services:
             $router: "@router"
             $twig: "@twig"
             $parameters:
-                template:
-                  email_updating: '%azine_email_update_confirmation.template%'
-                from_email:
-                  confirmation: '%azine_email_update_confirmation.from_email%'
+                template: '%azine_email_update_confirmation.template%'
+                from_email: '%azine_email_update_confirmation.from_email%'
 
     email_update_listener:
         class: Azine\EmailUpdateConfirmationBundle\Doctrine\EmailUpdateListener

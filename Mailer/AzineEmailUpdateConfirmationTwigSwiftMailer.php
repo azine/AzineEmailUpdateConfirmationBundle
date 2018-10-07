@@ -18,12 +18,12 @@ class AzineEmailUpdateConfirmationTwigSwiftMailer extends TwigSwiftMailer implem
      */
     public function sendUpdateEmailConfirmation(UserInterface $user, $confirmationUrl, $toEmail)
     {
-        $template = $this->parameters['template']['email_updating'];
+        $template = $this->parameters['template'];
         $context = array(
             'user' => $user,
             'confirmationUrl' => $confirmationUrl,
         );
 
-        $this->sendMessage($template, $context, $this->parameters['from_email']['confirmation'], $toEmail);
+        $this->sendMessage($template, $context, $this->parameters['from_email'], $toEmail);
     }
 }
