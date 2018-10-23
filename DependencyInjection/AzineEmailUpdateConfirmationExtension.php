@@ -31,6 +31,19 @@ class AzineEmailUpdateConfirmationExtension extends Extension
             $container->setParameter('azine_email_update_confirmation.redirect_route', $config['redirect_route']);
             $container->setParameter('azine_email_update_confirmation.from_email', $config['from_email']);
 
+            if($config['from_email'] == null){
+
+                try{
+
+                    $fromEmail = array_keys($container->getParameter('fos_user.resetting.email.from_email'))[0];
+                    $container->setParameter('azine_email_update_confirmation.from_email', $fromEmail);
+                }
+                catch (\Exception $e){
+
+                    throw new \Exception('Set up from_email parameter under azine_email_update_confirmation');
+                }
+            }
+
             $container->setAlias('email_update.mailer', $config['mailer']);
         }
     }

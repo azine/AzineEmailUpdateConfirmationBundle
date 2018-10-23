@@ -22,7 +22,7 @@ Then, you can install the new dependencies by running Composer’s update comman
 the directory where your `composer.json` file is located:
 
 ```
-php composer.phar update
+php composer.phar require azine/emailupdateconfirmation-bundle
 ```
 Now, Composer will automatically download all required files, and install them for you. 
 All that is left to do is to update your AppKernel.php file, and register the new bundle:
@@ -64,8 +64,8 @@ This is the complete list of configuration options with their defaults.
 
 // Default configuration for "AzineEmailUpdateConfirmationBundle"
 azine_email_update_confirmation:
-    enabled:        false # enables email update confirmation functionality
-    cypher_method:  null # determines the encryption mode for encryption of email value
+    enabled:        true # enables email update confirmation functionality
+    cypher_method:  null # determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value.
     mailer:         azine.email_update.mailer # mailer service
     email_template: @AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig # email template file
     redirect_route: fos_user_profile_show # route to redirect after email confirmation

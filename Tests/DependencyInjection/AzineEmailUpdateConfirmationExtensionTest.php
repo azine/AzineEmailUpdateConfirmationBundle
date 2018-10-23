@@ -42,4 +42,17 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestC
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.cypher_method'));
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.redirect_route'));
     }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testNotSetUpFromEmailParameter()
+    {
+        $configuration = new ContainerBuilder();
+        $loader = new AzineEmailUpdateConfirmationExtension();
+        $config = array();
+        $config['enabled'] = true;
+        $config['from_email'] = 'test@example.com';
+        $loader->load(array($config), $configuration);
+    }
 }
