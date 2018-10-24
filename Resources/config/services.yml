@@ -4,28 +4,35 @@ services:
         arguments:
             $router: "@router"
             $tokenGenerator: "@fos_user.util.token_generator"
-            $mailer: "@azine.email_update.mailer"
-            $emailEncryption: "@email_encryption"
+            $mailer: "@email_update.mailer"
             $eventDispatcher: "@event_dispatcher"
+            $validator: "@validator"
             $redirectRoute: "%azine_email_update_confirmation.redirect_route%"
-
-    email_encryption:
-        class: Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption
-        arguments: ["@validator", "%azine_email_update_confirmation.cypher_method%"]
+            $mode: "%azine_email_update_confirmation.cypher_method%"
 
     azine.email_update.mailer:
-        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer
+        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer
         arguments:
             $mailer: "@mailer"
             $router: "@router"
             $templating: "@templating"
             $parameters:
-                azine_email_update_confirmation.template: '%azine_email_update_confirmation.template%'
-                from_email: '%fos_user.resetting.email.from_email%'
+                template: '%azine_email_update_confirmation.template%'
+                from_email: '%azine_email_update_confirmation.from_email%'
+
+    azine.email_update.twig_mailer:
+        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationTwigSwiftMailer
+        arguments:
+            $mailer: "@mailer"
+            $router: "@router"
+            $twig: "@twig"
+            $parameters:
+                template: '%azine_email_update_confirmation.template%'
+                from_email: '%azine_email_update_confirmation.from_email%'
 
     email_update_listener:
         class: Azine\EmailUpdateConfirmationBundle\Doctrine\EmailUpdateListener
-        arguments: ["@email_update_confirmation", "@request_stack", "@fos_user.util.canonical_fields_updater", "@email_encryption", "@event_dispatcher"]
+        arguments: ["@email_update_confirmation", "@request_stack", "@fos_user.util.canonical_fields_updater", "@email_update.mailer"]
         tags:
             - { name: doctrine.event_listener, event: preUpdate, lazy: true }
 

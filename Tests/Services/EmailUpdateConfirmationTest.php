@@ -2,7 +2,6 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Tests;
 
-use Azine\EmailUpdateConfirmationBundle\Services\EmailEncryption;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\User;
@@ -23,14 +22,16 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
     private $tokenGenerator;
     /** @var MailerInterface */
     private $mailer;
-    /** @var EmailEncryption */
-    private $emailEncryption;
     /** @var EventDispatcher */
     private $eventDispatcher;
     /** @var string */
     private $redirectRoute = 'redirect_route';
+    /** @var string */
+    private $token = 'test_token';
     /** @var EmailUpdateConfirmation */
     private $emailUpdateConfirmation;
+    /** @var string */
+    private $emailTest = 'foo@example.com';
     /** @var User */
     private $user;
     private $cypher_method = 'AES-128-CBC';
@@ -43,8 +44,7 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->emailValidator = $this->getMockBuilder('Symfony\Component\Validator\Validator\RecursiveValidator')->disableOriginalConstructor()->getMock();
-        $this->constraintViolationList = new ConstraintViolationList(array());
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+        $this->constraintViolationList = $this->getMockBuilder('Symfony\Component\Validator\ConstraintViolationList')->disableOriginalConstructor()->getMock();
 
         $this->provider = $this->getMockBuilder('Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface')->getMock();
         $this->user = $this->getMockBuilder('FOS\UserBundle\Model\User')
@@ -55,26 +55,67 @@ class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
             ->getMock();
 
         $this->tokenGenerator = $this->getMockBuilder('FOS\UserBundle\Util\TokenGenerator')->disableOriginalConstructor()->getMock();
-        $this->mailer = $this->getMockBuilder('Azine\EmailUpdateConfirmationBundle\Mailer\AzineUpdateEmailMailer')->disableOriginalConstructor()->getMock();
-        $this->emailEncryption = new EmailEncryption($this->emailValidator, $this->cypher_method);
+        $this->mailer = $this->getMockBuilder('Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer')->disableOriginalConstructor()->getMock();
         $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
 
-        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->emailEncryption, $this->eventDispatcher, $this->redirectRoute);
+        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->eventDispatcher, $this->emailValidator, $this->redirectRoute, $this->cypher_method);
+
         $this->user->expects($this->any())
             ->method('getConfirmationToken')
-            ->will($this->returnValue('test_token'));
-        $this->emailUpdateConfirmation->setUser($this->user);
+            ->will($this->returnValue($this->token));
     }
 
     public function testFetchEncryptedEmailFromConfirmationLinkMethod()
     {
-        $emailEncryption = new EmailEncryption($this->emailValidator, $this->cypher_method);
-        $emailEncryption->setEmail('foo@example.com');
-        $emailEncryption->setUserConfirmationToken('test_token');
+        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->token, $this->emailTest);
 
-        $encryptedEmail = $emailEncryption->encryptEmailValue();
+        $email = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($this->user, $encryptedEmail);
+        $this->assertSame($this->emailTest, $email);
+    }
 
-        $email = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($encryptedEmail);
-        $this->assertSame('foo@example.com', $email);
+    public function testEncryptDecryptEmail()
+    {
+        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $this->emailTest);
+        $this->assertSame($this->emailTest, $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testDecryptFromWrongEmailFormat()
+    {
+        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
+
+        $this->constraintViolationList->expects($this->once())->method('count')->will($this->returnValue(1));
+        $wrongEmail = 'fooexample.com';
+
+        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $wrongEmail);
+        $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testIntegerIsSetInsteadOfEmailString()
+    {
+        $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), 123);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testIntegerIsSetInsteadOfConfirmationTokenStringForEncryption()
+    {
+        $this->emailUpdateConfirmation->encryptEmailValue(123, $this->emailTest);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testIntegerIsSetInsteadOfConfirmationTokenStringForDecryption()
+    {
+        $this->emailUpdateConfirmation->decryptEmailValue(123, $this->emailTest);
     }
 }

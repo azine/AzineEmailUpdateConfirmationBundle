@@ -10,30 +10,26 @@ use FOS\UserBundle\Model\UserInterface;
 interface EmailUpdateConfirmationInterface
 {
     /**
-     * @param string $hashedEmail
+     * @param UserInterface $user
+     * @param string        $hashedEmail
      *
      * @return string
      */
-    public function fetchEncryptedEmailFromConfirmationLink($hashedEmail);
+    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail);
 
     /**
-     * @param UserInterface $user
-     *
-     * @return $this
-     */
-    public function setUser(UserInterface $user);
-
-    /**
+     * @param string $confirmationToken
      * @param string $email
      *
-     * @return $this
+     * @return string Encrypted email value
      */
-    public function setEmail($email);
+    public function encryptEmailValue($confirmationToken, $email);
 
     /**
-     * @param string $confirmationRoute
+     * @param string $confirmationToken
+     * @param string $encryptedEmail
      *
-     * @return $this
+     * @return string Decrypted email value
      */
-    public function setConfirmationRoute($confirmationRoute);
+    public function decryptEmailValue($confirmationToken, $encryptedEmail);
 }

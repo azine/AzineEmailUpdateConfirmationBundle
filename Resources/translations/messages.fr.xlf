@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="fr" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="b4Sslaz" resname="email_update.flash.info">
+        <source>email_update.flash.info</source>
+        <target>Un email a été envoyé à votre nouvelle adresse email. Il contient un lien d'activation sur lequel il vous faudra cliquer afin de confirmer l'adresse email.</target>
+      </trans-unit>
+      <trans-unit id="5HrMZ9L" resname="email_update.flash.success">
+        <source>email_update.flash.success</source>
+        <target>l'e-mail a été mis à jour avec succès.</target>
+      </trans-unit>
+      <trans-unit id="Ku728Ng" resname="email_update.error.message">
+        <source>email_update.error.message</source>
+        <target>Lien de confirmation invalide. L'email ne peut pas être mis à jour.</target>
+      </trans-unit>
+      <trans-unit id="jpQGcUm" resname="email_update.email.subject">
+        <source>email_update.email.subject</source>
+        <target>Confirmez l'activation de la nouvelle adresse email.</target>
+      </trans-unit>
+      <trans-unit id="esAUBv_" resname="email_update.email.message">
+        <source>email_update.email.message</source>
+        <target>Bonjour %username%!
+Pour activer votre nouvelle adresse email, merci de vous rendre sur %confirmationUrl%
+
+Cordialement,
+L'équipe</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
