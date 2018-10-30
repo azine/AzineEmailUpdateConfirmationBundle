@@ -3,8 +3,8 @@
 namespace Azine\EmailUpdateConfirmationBundle\Tests\DependencyInjection;
 
 use Azine\EmailUpdateConfirmationBundle\DependencyInjection\AzineEmailUpdateConfirmationExtension;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class AzineEmailUpdateConfirmationExtensionTest extends AzineTestCase
 {

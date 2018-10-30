@@ -4,7 +4,6 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests;
 
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Mailer\MailerInterface;
-use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
 use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Util\TokenGenerator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
