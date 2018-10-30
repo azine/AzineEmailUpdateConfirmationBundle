@@ -25,7 +25,7 @@ class Configuration implements ConfigurationInterface
         // more information on that topic.
 
         $rootNode->children()
-                ->booleanNode('enabled')->defaultTrue()->info('enables email update confirmation functionality')->end()
+                ->booleanNode('enabled')->defaultTrue()->info('enable/disable email update confirmation functionality. default = true')->end()
                 ->scalarNode('cypher_method')->defaultNull()->info('determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value')->end()
                 ->scalarNode('mailer')->defaultValue('azine.email_update.mailer')->info('mailer service')->end()
                 ->scalarNode('email_template')->defaultValue('@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig')->info('email template file')->end()
