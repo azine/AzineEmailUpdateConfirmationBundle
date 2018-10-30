@@ -5,8 +5,9 @@ namespace Azine\EmailUpdateConfirmationBundle\Routing;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
 use Symfony\Component\Routing\RouteCollection;
+use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
 
-class RoutingTest extends \PHPUnit_Framework_TestCase
+class RoutingTest extends AzineTestCase
 {
     /**
      * @dataProvider loadRoutingProvider

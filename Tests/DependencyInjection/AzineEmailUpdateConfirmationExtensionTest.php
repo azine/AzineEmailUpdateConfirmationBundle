@@ -4,8 +4,9 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\DependencyInjection;
 
 use Azine\EmailUpdateConfirmationBundle\DependencyInjection\AzineEmailUpdateConfirmationExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
 
-class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestCase
+class AzineEmailUpdateConfirmationExtensionTest extends AzineTestCase
 {
     public function testDisableEmailUpdateConfirmation()
     {
@@ -52,7 +53,6 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestC
         $loader = new AzineEmailUpdateConfirmationExtension();
         $config = array();
         $config['enabled'] = true;
-        $config['from_email'] = 'test@example.com';
         $loader->load(array($config), $configuration);
     }
 }

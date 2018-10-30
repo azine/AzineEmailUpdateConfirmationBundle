@@ -29,7 +29,7 @@ class Configuration implements ConfigurationInterface
                 ->scalarNode('cypher_method')->defaultNull()->info('determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value')->end()
                 ->scalarNode('mailer')->defaultValue('azine.email_update.mailer')->info('mailer service')->end()
                 ->scalarNode('email_template')->defaultValue('@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig')->info('email template file')->end()
-                ->scalarNode('from_email')->info('from email')->end()
+                ->scalarNode('from_email')->defaultNull()->info('from email')->end()
                 ->scalarNode('redirect_route')->defaultValue('fos_user_profile_show')->info('from email')->end()
             ->end();
 

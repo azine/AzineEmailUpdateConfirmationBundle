@@ -5,8 +5,9 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\EventListener;
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
 use Symfony\Component\EventDispatcher\Event;
+use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
 
-class FlashListenerTest extends \PHPUnit_Framework_TestCase
+class FlashListenerTest extends AzineTestCase
 {
     /** @var Event */
     private $event;
