@@ -27,7 +27,7 @@ php composer.phar require azine/emailupdateconfirmation-bundle
 Now, Composer will automatically download all required files, and install them for you. 
 All that is left to do is to update your AppKernel.php file, and register the new bundle:
 
-```
+```php
 <?php
 
 // in AppKernel::registerBundles()
@@ -39,18 +39,15 @@ $bundles = array(
 ```
 
 Register the routes of the AzineEmailUpdateConfirmationBundle:
-
-```
+```yml
 // in app/config/routing.yml
 
 azine_email_update_confirmation_bundle:
     resource: "@AzineEmailUpdateConfirmationBundle/Resources/config/routing.yml"
-   
-    
 ```
-Setup from_email parameter:
 
-```
+Setup from_email parameter:
+```yml
 // in app/config/config.yml
 
 azine_email_update_confirmation:
@@ -58,19 +55,32 @@ azine_email_update_confirmation:
 ```
 ## Configuration options
 This is the complete list of configuration options with their defaults.
-
-```
+```yml
 //app/config/config.yml
 
-// Default configuration for "AzineEmailUpdateConfirmationBundle"
+# Default configuration for "AzineEmailUpdateConfirmationBundle"
 azine_email_update_confirmation:
-    enabled:        true # enables email update confirmation functionality
-    cypher_method:  null # determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value.
-    mailer:         azine.email_update.mailer # mailer service
-    email_template: @AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig # email template file
-    redirect_route: fos_user_profile_show # route to redirect after email confirmation
-    from_email:      # from email
-    
+
+    # enable/disable email update confirmation functionality. default = true
+    enabled:              true
+
+    # determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value
+    cypher_method:        null
+
+    # mailer service to be used
+    mailer:               azine.email_update.mailer
+
+    # email template
+    email_template:       '@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig'
+
+    # `from`-address for the email. If not set, `fos_user.resetting.email.from_email` will be used
+    from_email:           ~
+
+    # `from`-name for the email. If not set, `fos_user.resetting.email.from_email` will be used
+    from_name:            ~
+
+    # route to redirect to, after the update confirmation
+    redirect_route:       fos_user_profile_show
 
 ```
 

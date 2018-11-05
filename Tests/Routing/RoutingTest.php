@@ -2,12 +2,11 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Routing;
 
-use Azine\EmailUpdateConfirmationBundle\Tests\AzineTestCase;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
 use Symfony\Component\Routing\RouteCollection;
 
-class RoutingTest extends AzineTestCase
+class RoutingTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider loadRoutingProvider
