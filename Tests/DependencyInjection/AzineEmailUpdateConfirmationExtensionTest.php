@@ -43,7 +43,8 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestC
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.redirect_route'));
     }
 
-    public function testEnableEmailUpdateConfirmationByDefault(){
+    public function testEnableEmailUpdateConfirmationByDefault()
+    {
         $configuration = new ContainerBuilder();
         $loader = new AzineEmailUpdateConfirmationExtension();
         $config = array();
@@ -51,7 +52,7 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestC
         $loader->load(array($config), $configuration);
         $this->assertTrue($configuration->hasDefinition('email_update_confirmation'));
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.template'));
-        $this->assertEquals($config['from_email'], $configuration->getParameter('azine_email_update_confirmation.from_email'));
+        $this->assertSame($config['from_email'], $configuration->getParameter('azine_email_update_confirmation.from_email'));
     }
 
     /**
@@ -69,9 +70,9 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestC
         $configuration = new ContainerBuilder();
         $fosFromEmail = 'fosuserbundle.from.email@exmple.com';
         $fosFromName = 'From Email Name';
-        $configuration->setParameter('fos_user.resetting.email.from_email', [$fosFromEmail => $fosFromName]);
+        $configuration->setParameter('fos_user.resetting.email.from_email', array($fosFromEmail => $fosFromName));
         $loader = new AzineEmailUpdateConfirmationExtension();
         $loader->load(array(), $configuration);
-        $this->assertEquals($fosFromEmail, $configuration->getParameter('azine_email_update_confirmation.from_email'));
+        $this->assertSame($fosFromEmail, $configuration->getParameter('azine_email_update_confirmation.from_email'));
     }
 }
