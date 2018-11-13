@@ -5,7 +5,7 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\DependencyInjection;
 use Azine\EmailUpdateConfirmationBundle\DependencyInjection\AzineEmailUpdateConfirmationExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestCase
+class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestCase
 {
     public function testDisableEmailUpdateConfirmation()
     {
@@ -41,5 +41,37 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit_Framework_TestC
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.template'));
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.cypher_method'));
         $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.redirect_route'));
+    }
+
+    public function testEnableEmailUpdateConfirmationByDefault(){
+        $configuration = new ContainerBuilder();
+        $loader = new AzineEmailUpdateConfirmationExtension();
+        $config = array();
+        $config['from_email'] = 'test@example.com';
+        $loader->load(array($config), $configuration);
+        $this->assertTrue($configuration->hasDefinition('email_update_confirmation'));
+        $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.template'));
+        $this->assertEquals($config['from_email'], $configuration->getParameter('azine_email_update_confirmation.from_email'));
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testNotSetUpFromEmailParameter()
+    {
+        $configuration = new ContainerBuilder();
+        $loader = new AzineEmailUpdateConfirmationExtension();
+        $loader->load(array(), $configuration);
+    }
+
+    public function testFOSUserBundleFromEmailParameter()
+    {
+        $configuration = new ContainerBuilder();
+        $fosFromEmail = 'fosuserbundle.from.email@exmple.com';
+        $fosFromName = 'From Email Name';
+        $configuration->setParameter('fos_user.resetting.email.from_email', [$fosFromEmail => $fosFromName]);
+        $loader = new AzineEmailUpdateConfirmationExtension();
+        $loader->load(array(), $configuration);
+        $this->assertEquals($fosFromEmail, $configuration->getParameter('azine_email_update_confirmation.from_email'));
     }
 }

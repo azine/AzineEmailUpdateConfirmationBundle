@@ -12,7 +12,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class EmailUpdateConfirmationTest extends \PHPUnit_Framework_TestCase
+class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
 {
     /** @var ExpressionFunctionProviderInterface */
     private $provider;
