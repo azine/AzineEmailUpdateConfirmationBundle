@@ -6,7 +6,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
 use Symfony\Component\Routing\RouteCollection;
 
-class RoutingTest extends \PHPUnit_Framework_TestCase
+class RoutingTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider loadRoutingProvider

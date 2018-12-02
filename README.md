@@ -29,8 +29,8 @@ All that is left to do is to update your AppKernel.php file, and register the ne
 
 ```php
 <?php
-
 // in AppKernel::registerBundles()
+
 $bundles = array(
     // ...
     new Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationBundle(),
@@ -45,43 +45,31 @@ Register the routes of the AzineEmailUpdateConfirmationBundle:
 azine_email_update_confirmation_bundle:
     resource: "@AzineEmailUpdateConfirmationBundle/Resources/config/routing.yml"
 ```
-
-Setup from_email parameter:
-```yml
-// in app/config/config.yml
-
-azine_email_update_confirmation:
-    from_email: test@example.com
-```
+   
 ## Configuration options
 This is the complete list of configuration options with their defaults.
-```yml
-//app/config/config.yml
 
-# Default configuration for "AzineEmailUpdateConfirmationBundle"
+```yml
+// app/config/config.yml
 azine_email_update_confirmation:
 
-    # enable/disable email update confirmation functionality. default = true
-    enabled:              true
+    # enables email update confirmation functionality
+    enabled:        true
 
-    # determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value
-    cypher_method:        null
+    # determines the encryption mode for encryption of email value. openssl_get_cipher_methods(false) is default value.
+    cypher_method:  null
 
-    # mailer service to be used
-    mailer:               azine.email_update.mailer
+    # mailer service
+    mailer:         azine.email_update.mailer
 
-    # email template
-    email_template:       '@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig'
+    # email template file
+    email_template: @AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig
 
-    # `from`-address for the email. If not set, `fos_user.resetting.email.from_email` will be used
-    from_email:           ~
+    # route to redirect after email confirmation 
+    redirect_route: fos_user_profile_show
 
-    # `from`-name for the email. If not set, `fos_user.resetting.email.from_email` will be used
-    from_name:            ~
-
-    # route to redirect to, after the update confirmation
-    redirect_route:       fos_user_profile_show
-
+    # "from" email address for the confirmation email. The default is the same email as configured for the password-reset emails sent by the FOSUserBundle
+    from_email:     %fos_user.resetting.email.from_email%
 ```
 
 # Contribute
