@@ -8,6 +8,7 @@ env:
   - SYMFONY_VERSION=lts:^2
   - SYMFONY_VERSION=lts:^3
   - SYMFONY_VERSION=flex:^1
+  - SYMFONY_VERSION=lts:^4
 
 
 matrix:
@@ -21,7 +22,8 @@ matrix:
         - SYMFONY_VERSION=lts:^3
         - cs_fixer=cs_dry_run
 
-sudo: false
+  allow_failures:
+    - env: SYMFONY_VERSION=lts:^4
 
 cache:
   directories:
