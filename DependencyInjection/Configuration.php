@@ -12,7 +12,7 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
+        $treeBuilder = new TreeBuilder('azine_email_update_confirmation');
         $rootNode = $treeBuilder->root('azine_email_update_confirmation');
 
         $rootNode->children()
