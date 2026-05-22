@@ -113,7 +113,7 @@ class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 
         $event = new UserEvent($user, $request);
 
-        $this->eventDispatcher->dispatch(AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE, $event);
+        $this->eventDispatcher->dispatch($event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
 
         return $this->router->generate(
             $this->confirmationRoute,

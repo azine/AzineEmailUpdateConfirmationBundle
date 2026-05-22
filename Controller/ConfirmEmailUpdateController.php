@@ -9,18 +9,18 @@ use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Controller managing the confirmation of changed user email.
  *
  * @author Dominik Businger <git@azine.me>
  */
-class ConfirmEmailUpdateController extends Controller
+class ConfirmEmailUpdateController extends AbstractController
 {
     /**
      * @var EventDispatcherInterface
@@ -92,7 +92,7 @@ class ConfirmEmailUpdateController extends Controller
         $this->userManager->updateUser($user);
 
         $event = new UserEvent($user, $request);
-        $this->eventDispatcher->dispatch(AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS, $event);
+        $this->eventDispatcher->dispatch($event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
 
         return $this->redirect($this->generateUrl($redirectRoute));
     }

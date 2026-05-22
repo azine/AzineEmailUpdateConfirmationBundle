@@ -4,40 +4,34 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\EventListener;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
-use Symfony\Component\EventDispatcher\Event;
 
 class FlashListenerTest extends \PHPUnit\Framework\TestCase
 {
-    /** @var Event */
-    private $event;
-
-    /** @var FlashListener */
+        /** @var FlashListener */
     private $listener;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $this->event = new Event();
+        $flashBag = $this->createMock(\Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface::class);
 
-        $flashBag = $this->getMockBuilder('Symfony\Component\HttpFoundation\Session\Flash\FlashBag')->getMock();
-
-        $session = $this->getMockBuilder('Symfony\Component\HttpFoundation\Session\Session')->disableOriginalConstructor()->getMock();
+        $session = $this->createMock(\Symfony\Component\HttpFoundation\Session\SessionInterface::class);
         $session
             ->expects($this->once())
             ->method('getFlashBag')
             ->willReturn($flashBag);
 
-        $translator = $this->getMockBuilder('Symfony\Component\Translation\TranslatorInterface')->getMock();
+        $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
 
         $this->listener = new FlashListener($session, $translator);
     }
 
     public function testAddSuccessFlash()
     {
-        $this->listener->addSuccessFlash($this->event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
+        $this->listener->addSuccessFlash(new \stdClass(), AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
     }
 
     public function testAddInfoFlash()
     {
-        $this->listener->addInfoFlash($this->event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
+        $this->listener->addInfoFlash(new \stdClass(), AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
     }
 }
