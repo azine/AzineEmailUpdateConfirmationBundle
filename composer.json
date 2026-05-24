@@ -2,7 +2,12 @@
     "name": "azine/emailupdateconfirmation-bundle",
     "type": "symfony-bundle",
     "description": "Symfony bundle to require the user to confirm her update email address by clicking on a link sent to the new address. This should be part of the FriendsOfSymfony/UserBundle, but was not accepted as new feature by a maintainer.",
-    "keywords": ["email", "update", "confirm", "email update confirmation"],
+    "keywords": [
+        "email",
+        "update",
+        "confirm",
+        "email update confirmation"
+    ],
     "homepage": "https://github.com/azine/AzineEmailUpdateConfirmationBundle",
     "license": "MIT",
     "authors": [
@@ -13,23 +18,31 @@
     ],
     "config": {
         "process-timeout": 590,
-        "github-protocols": ["https", "git", "ssh"],
-        "github-domains": ["github.com"]
+        "github-protocols": [
+            "https",
+            "git",
+            "ssh"
+        ],
+        "github-domains": [
+            "github.com"
+        ],
+        "sort-packages": true
     },
     "require": {
-        "php": ">=5.6.0",
-        "symfony/http-foundation": "^2.7|^3.0|^4.0",
-        "symfony/event-dispatcher": "^2.7|^3.0|^4.0",
-        "symfony/translation": "^2.7|^3.0|^4.0",
-        "symfony/routing": "^2.7|^3.0|^4.0",
-        "symfony/validator": "^2.7|^3.0|^4.0",
-        "symfony/yaml": "^2.7|^3.0|^4.0",
-        "friendsofsymfony/user-bundle": "^2.0",
-        "monolog/monolog": "^1.6,>=1.6.0"
+        "php": "^8.5",
+        "symfony/http-foundation": "^7.4",
+        "symfony/event-dispatcher": "^7.4",
+        "symfony/translation": "^7.4",
+        "symfony/routing": "^7.4",
+        "symfony/validator": "^7.4",
+        "symfony/yaml": "^7.4",
+        "friendsofsymfony/user-bundle": "^4.0",
+        "monolog/monolog": "^3.0"
     },
     "require-dev": {
-        "phpunit/phpunit":  "^5.7.27|^6.0|^7.0",
-        "friendsofphp/php-cs-fixer": "^2.2"
+        "phpunit/phpunit": "^11.0",
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "symfony/phpunit-bridge": "^7.4"
     },
     "extra": {
         "branch-alias": {
@@ -37,7 +50,9 @@
         }
     },
     "autoload": {
-        "psr-0": { "Azine\\EmailUpdateConfirmationBundle": "" }
+        "psr-0": {
+            "Azine\\EmailUpdateConfirmationBundle": ""
+        }
     },
     "minimum-stability": "stable",
     "target-dir": "Azine/EmailUpdateConfirmationBundle"

@@ -41,7 +41,7 @@ class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
     /** @var ConstraintViolationList */
     private $constraintViolationList;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->emailValidator = $this->getMockBuilder('Symfony\Component\Validator\Validator\RecursiveValidator')->disableOriginalConstructor()->getMock();
         $this->constraintViolationList = $this->getMockBuilder('Symfony\Component\Validator\ConstraintViolationList')->disableOriginalConstructor()->getMock();
@@ -55,7 +55,7 @@ class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->tokenGenerator = $this->getMockBuilder('FOS\UserBundle\Util\TokenGenerator')->disableOriginalConstructor()->getMock();
-        $this->mailer = $this->getMockBuilder('Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer')->disableOriginalConstructor()->getMock();
+        $this->mailer = $this->createMock('Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface');
         $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
 
         $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->eventDispatcher, $this->emailValidator, $this->redirectRoute, $this->cypher_method);
@@ -81,11 +81,9 @@ class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->emailTest, $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testDecryptFromWrongEmailFormat()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
 
         $this->constraintViolationList->expects($this->once())->method('count')->will($this->returnValue(1));
@@ -95,27 +93,21 @@ class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
         $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testIntegerIsSetInsteadOfEmailString()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), 123);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testIntegerIsSetInsteadOfConfirmationTokenStringForEncryption()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $this->emailUpdateConfirmation->encryptEmailValue(123, $this->emailTest);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testIntegerIsSetInsteadOfConfirmationTokenStringForDecryption()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $this->emailUpdateConfirmation->decryptEmailValue(123, $this->emailTest);
     }
 }

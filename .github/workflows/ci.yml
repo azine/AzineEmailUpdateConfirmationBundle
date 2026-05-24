@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }} / Dependencies ${{ matrix.dependencies }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5']
+        dependencies: [highest, lowest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+          extensions: mbstring, openssl, ctype, iconv, json
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-publish
+
+      - name: Configure dependency strategy
+        run: |
+          if [ "${{ matrix.dependencies }}" = "lowest" ]; then
+            echo "COMPOSER_FLAGS=--prefer-lowest --prefer-stable" >> $GITHUB_ENV
+          else
+            echo "COMPOSER_FLAGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Cache composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.dependencies }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.dependencies }}-
+
+      - name: Install dependencies
+        run: composer update --no-interaction --prefer-dist $COMPOSER_FLAGS
+
+      - name: Run tests
+        run: vendor/bin/phpunit -c phpunit.xml.dist

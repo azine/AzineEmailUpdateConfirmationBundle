@@ -55,11 +55,9 @@ class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestC
         $this->assertSame($config['from_email'], $configuration->getParameter('azine_email_update_confirmation.from_email'));
     }
 
-    /**
-     * @expectedException \Exception
-     */
     public function testNotSetUpFromEmailParameter()
     {
+        $this->expectException(\Exception::class);
         $configuration = new ContainerBuilder();
         $loader = new AzineEmailUpdateConfirmationExtension();
         $loader->load(array(), $configuration);

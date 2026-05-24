@@ -2,26 +2,36 @@
 
 namespace Azine\EmailUpdateConfirmationBundle\Mailer;
 
-use FOS\UserBundle\Mailer\Mailer;
 use FOS\UserBundle\Model\UserInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mailer\MailerInterface;
+use Twig\Environment;
 
-class AzineEmailUpdateConfirmationMailer extends Mailer implements EmailUpdateConfirmationMailerInterface
+class AzineEmailUpdateConfirmationMailer implements EmailUpdateConfirmationMailerInterface
 {
-    /**
-     * Send confirmation link to specified new user email.
-     *
-     * @param UserInterface $user
-     * @param string        $confirmationUrl
-     * @param string        $toEmail
-     */
+    private MailerInterface $mailer;
+    private Environment $twig;
+    private array $parameters;
+
+    public function __construct(MailerInterface $mailer, Environment $twig, array $parameters)
+    {
+        $this->mailer = $mailer;
+        $this->twig = $twig;
+        $this->parameters = $parameters;
+    }
+
     public function sendUpdateEmailConfirmation(UserInterface $user, $confirmationUrl, $toEmail)
     {
-        $template = $this->parameters['template'];
-        $rendered = $this->templating->render($template, array(
-            'user' => $user,
-            'confirmationUrl' => $confirmationUrl,
-        ));
+        $email = (new TemplatedEmail())
+            ->from($this->parameters['from_email'])
+            ->to($toEmail)
+            ->subject('Email update confirmation')
+            ->textTemplate($this->parameters['template'])
+            ->context([
+                'user' => $user,
+                'confirmationUrl' => $confirmationUrl,
+            ]);
 
-        $this->sendEmailMessage($rendered, $this->parameters['from_email'], $toEmail);
+        $this->mailer->send($email);
     }
 }
