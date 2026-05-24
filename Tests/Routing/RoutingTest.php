@@ -33,7 +33,7 @@ class RoutingTest extends \PHPUnit\Framework\TestCase
     /**
      * @return array
      */
-    public function loadRoutingProvider()
+    public static function loadRoutingProvider()
     {
         return array(
             array('user_update_email_confirm', '/confirm-email-update/{token}/{redirectRoute}', array('GET')),

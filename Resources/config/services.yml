@@ -13,9 +13,8 @@ services:
     azine.email_update.mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer
         arguments:
-            $mailer: "@mailer"
-            $router: "@router"
-            $templating: "@templating"
+            $mailer: "@mailer.mailer"
+            $twig: "@twig"
             $parameters:
                 template: '%azine_email_update_confirmation.template%'
                 from_email: '%azine_email_update_confirmation.from_email%'
@@ -23,8 +22,7 @@ services:
     azine.email_update.twig_mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationTwigSwiftMailer
         arguments:
-            $mailer: "@mailer"
-            $router: "@router"
+            $mailer: "@mailer.mailer"
             $twig: "@twig"
             $parameters:
                 template: '%azine_email_update_confirmation.template%'

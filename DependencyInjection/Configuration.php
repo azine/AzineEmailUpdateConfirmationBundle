@@ -10,10 +10,10 @@ class Configuration implements ConfigurationInterface
     /**
      * {@inheritdoc}
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('azine_email_update_confirmation');
+        $treeBuilder = new TreeBuilder('azine_email_update_confirmation');
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode->children()
                 ->booleanNode('enabled')->defaultTrue()->info('enable/disable email update confirmation functionality. default = true')->end()

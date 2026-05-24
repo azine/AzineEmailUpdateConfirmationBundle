@@ -4,33 +4,36 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\EventListener;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-class FlashListenerTest extends \PHPUnit\Framework\TestCase
+class FlashListenerTest extends TestCase
 {
-        /** @var FlashListener */
-    private $listener;
+    private FlashListener $listener;
 
     public function setUp(): void
     {
-        $flashBag = $this->createMock(\Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface::class);
+        $flashBag = $this->createMock(FlashBagInterface::class);
 
-        $session = $this->createMock(\Symfony\Component\HttpFoundation\Session\SessionInterface::class);
+        $session = $this->createMock(Session::class);
         $session
             ->expects($this->once())
             ->method('getFlashBag')
             ->willReturn($flashBag);
 
-        $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
 
         $this->listener = new FlashListener($session, $translator);
     }
 
-    public function testAddSuccessFlash()
+    public function testAddSuccessFlash(): void
     {
         $this->listener->addSuccessFlash(new \stdClass(), AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
     }
 
-    public function testAddInfoFlash()
+    public function testAddInfoFlash(): void
     {
         $this->listener->addInfoFlash(new \stdClass(), AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
     }

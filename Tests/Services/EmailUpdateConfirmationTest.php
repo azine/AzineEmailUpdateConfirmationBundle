@@ -55,7 +55,7 @@ class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->tokenGenerator = $this->getMockBuilder('FOS\UserBundle\Util\TokenGenerator')->disableOriginalConstructor()->getMock();
-        $this->mailer = $this->getMockBuilder('Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer')->disableOriginalConstructor()->getMock();
+        $this->mailer = $this->createMock('Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface');
         $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
 
         $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->eventDispatcher, $this->emailValidator, $this->redirectRoute, $this->cypher_method);
