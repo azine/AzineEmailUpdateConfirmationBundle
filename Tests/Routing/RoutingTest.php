@@ -1,42 +1,40 @@
 <?php
 
-namespace Azine\EmailUpdateConfirmationBundle\Routing;
+declare(strict_types=1);
 
+namespace Azine\EmailUpdateConfirmationBundle\Tests\Routing;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
-use Symfony\Component\Routing\RouteCollection;
 
-class RoutingTest extends \PHPUnit\Framework\TestCase
+class RoutingTest extends TestCase
 {
-    /**
-     * @dataProvider loadRoutingProvider
-     *
-     * @param string $routeName
-     * @param string $path
-     * @param array  $methods
-     */
-    public function testLoadRouting($routeName, $path, array $methods)
-    {
-        $locator = new FileLocator();
-        $loader = new YamlFileLoader($locator);
-
-        $collection = new RouteCollection();
-        $subCollection = $loader->load(__DIR__.'/../../Resources/config/routing.yml');
-        $collection->addCollection($subCollection);
-
+    #[DataProvider('loadRoutingProvider')]
+    public function testLoadRouting(
+        string $routeName,
+        string $path,
+        array $methods,
+        string $controller,
+    ): void {
+        $loader = new YamlFileLoader(new FileLocator(__DIR__.'/../../Resources/config'));
+        $collection = $loader->load('routing.yml');
         $route = $collection->get($routeName);
-        $this->assertNotNull($route, sprintf('The route "%s" should exists', $routeName));
-        $this->assertSame($path, $route->getPath());
-        $this->assertSame($methods, $route->getMethods());
+
+        self::assertNotNull($route, sprintf('The route "%s" should exist.', $routeName));
+        self::assertSame($path, $route->getPath());
+        self::assertSame($methods, $route->getMethods());
+        self::assertSame($controller, $route->getDefault('_controller'));
     }
 
-    /**
-     * @return array
-     */
-    public static function loadRoutingProvider()
+    public static function loadRoutingProvider(): iterable
     {
-        return array(
-            array('user_update_email_confirm', '/confirm-email-update/{token}/{redirectRoute}', array('GET')),
-        );
+        yield 'confirmation route' => [
+            'user_update_email_confirm',
+            '/confirm-email-update/{token}/{redirectRoute}',
+            ['GET'],
+            'Azine\\EmailUpdateConfirmationBundle\\Controller\\ConfirmEmailUpdateController::confirmEmailUpdateAction',
+        ];
     }
 }
