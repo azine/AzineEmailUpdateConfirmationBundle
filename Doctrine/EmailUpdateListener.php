@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Doctrine;
 
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
@@ -9,70 +11,56 @@ use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-/**
- * Class EmailUpdateListener.
- */
 class EmailUpdateListener
 {
-    /**
-     * @var EmailUpdateConfirmation
-     */
-    private $emailUpdateConfirmation;
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-    /**
-     * @var CanonicalFieldsUpdater
-     */
-    private $canonicalFieldsUpdater;
-    /**
-     * @var EmailUpdateConfirmationMailerInterface
-     */
-    private $mailer;
-
-    /**
-     * Constructor.
-     *
-     * @param EmailUpdateConfirmation                $emailUpdateConfirmation
-     * @param RequestStack                           $requestStack
-     * @param CanonicalFieldsUpdater                 $canonicalFieldsUpdater
-     * @param EmailUpdateConfirmationMailerInterface $mailer
-     */
-    public function __construct(EmailUpdateConfirmation $emailUpdateConfirmation, RequestStack $requestStack, CanonicalFieldsUpdater $canonicalFieldsUpdater, EmailUpdateConfirmationMailerInterface $mailer)
-    {
-        $this->emailUpdateConfirmation = $emailUpdateConfirmation;
-        $this->requestStack = $requestStack;
-        $this->canonicalFieldsUpdater = $canonicalFieldsUpdater;
-        $this->mailer = $mailer;
+    public function __construct(
+        private readonly EmailUpdateConfirmation $emailUpdateConfirmation,
+        private readonly RequestStack $requestStack,
+        private readonly CanonicalFieldsUpdater $canonicalFieldsUpdater,
+        private readonly EmailUpdateConfirmationMailerInterface $mailer,
+    ) {
     }
 
-    /**
-     * Pre update listener based on doctrine common.
-     *
-     * @param PreUpdateEventArgs $args
-     */
-    public function preUpdate(PreUpdateEventArgs $args)
+    public function preUpdate(PreUpdateEventArgs $args): void
     {
-        $object = $args->getObject();
-        if ($object instanceof UserInterface) {
-            $user = $object;
-            if ($user->getConfirmationToken() != $this->emailUpdateConfirmation->getEmailConfirmedToken() && isset($args->getEntityChangeSet()['email'])) {
-                $oldEmail = $args->getEntityChangeSet()['email'][0];
-                $newEmail = $args->getEntityChangeSet()['email'][1];
-                $user->setEmail($oldEmail);
-                $user->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($oldEmail));
-
-                $this->mailer->sendUpdateEmailConfirmation(
-                    $user,
-                    $this->emailUpdateConfirmation->generateConfirmationLink($this->requestStack->getCurrentRequest(), $user, $newEmail),
-                    $newEmail
-                );
-            }
-
-            if ($user->getConfirmationToken() == $this->emailUpdateConfirmation->getEmailConfirmedToken()) {
-                $user->setConfirmationToken(null);
-            }
+        $user = $args->getObject();
+        if (!$user instanceof UserInterface) {
+            return;
         }
+
+        if ($user->getConfirmationToken() === $this->emailUpdateConfirmation->getEmailConfirmedToken()) {
+            $user->setConfirmationToken(null);
+            if ($args->hasChangedField('confirmationToken')) {
+                $args->setNewValue('confirmationToken', null);
+            }
+
+            return;
+        }
+
+        if (!$args->hasChangedField('email')) {
+            return;
+        }
+
+        $oldEmail = (string) $args->getOldValue('email');
+        $newEmail = (string) $args->getNewValue('email');
+        $oldCanonicalEmail = $this->canonicalFieldsUpdater->canonicalizeEmail($oldEmail);
+
+        $user->setEmail($oldEmail);
+        $user->setEmailCanonical($oldCanonicalEmail);
+        $args->setNewValue('email', $oldEmail);
+        if ($args->hasChangedField('emailCanonical')) {
+            $args->setNewValue('emailCanonical', $oldCanonicalEmail);
+        }
+
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request) {
+            throw new \LogicException('Email-address changes requiring confirmation need an active HTTP request.');
+        }
+
+        $this->mailer->sendUpdateEmailConfirmation(
+            $user,
+            $this->emailUpdateConfirmation->generateConfirmationLink($request, $user, $newEmail),
+            $newEmail,
+        );
     }
 }
