@@ -4,48 +4,53 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   tests:
-    name: PHP ${{ matrix.php }} / Dependencies ${{ matrix.dependencies }}
+    name: "PHP 8.5 / Dependencies ${{ matrix.dependencies }}"
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.5']
-        dependencies: [highest, lowest]
+        dependencies: [stable, lowest]
+
+    env:
+      MAILER_DSN: 'null://null'
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.5'
           tools: composer:v2
           coverage: none
-          extensions: mbstring, openssl, ctype, iconv, json
+          extensions: ctype, iconv, intl, mbstring, openssl, tokenizer, xml
 
       - name: Validate composer.json
         run: composer validate --strict --no-check-publish
 
-      - name: Configure dependency strategy
-        run: |
-          if [ "${{ matrix.dependencies }}" = "lowest" ]; then
-            echo "COMPOSER_FLAGS=--prefer-lowest --prefer-stable" >> $GITHUB_ENV
-          else
-            echo "COMPOSER_FLAGS=" >> $GITHUB_ENV
-          fi
-
-      - name: Cache composer downloads
-        uses: actions/cache@v4
+      - name: Cache Composer downloads
+        uses: actions/cache@v5
         with:
           path: ~/.composer/cache/files
-          key: composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.dependencies }}-${{ hashFiles('composer.json') }}
+          key: composer-${{ runner.os }}-php85-${{ matrix.dependencies }}-${{ hashFiles('composer.json') }}
           restore-keys: |
-            composer-${{ runner.os }}-${{ matrix.php }}-${{ matrix.dependencies }}-
+            composer-${{ runner.os }}-php85-${{ matrix.dependencies }}-
 
-      - name: Install dependencies
-        run: composer update --no-interaction --prefer-dist $COMPOSER_FLAGS
+      - name: Install stable dependencies
+        if: matrix.dependencies == 'stable'
+        run: composer update --no-interaction --prefer-dist
+
+      - name: Install lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --prefer-lowest --prefer-stable --prefer-dist
 
       - name: Run tests
         run: vendor/bin/phpunit -c phpunit.xml.dist
