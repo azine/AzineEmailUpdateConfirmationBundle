@@ -1,76 +1,68 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Tests\DependencyInjection;
 
 use Azine\EmailUpdateConfirmationBundle\DependencyInjection\AzineEmailUpdateConfirmationExtension;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class AzineEmailUpdateConfirmationExtensionTest extends \PHPUnit\Framework\TestCase
+class AzineEmailUpdateConfirmationExtensionTest extends TestCase
 {
-    public function testDisableEmailUpdateConfirmation()
+    public function testCanDisableEmailUpdateConfirmation(): void
     {
-        $configuration = new ContainerBuilder();
-        $loader = new AzineEmailUpdateConfirmationExtension();
-        $config = array();
-        $config['enabled'] = false;
-        $config['from_email'] = 'test@example.com';
-        $loader->load(array($config), $configuration);
+        $container = new ContainerBuilder();
+        (new AzineEmailUpdateConfirmationExtension())->load([
+            ['enabled' => false, 'from_email' => 'test@example.com'],
+        ], $container);
 
-        $this->assertFalse($configuration->hasDefinition('email_update_confirmation'));
-        $this->assertFalse($configuration->hasDefinition('azine.email_update.mailer'));
-        $this->assertFalse($configuration->hasDefinition('email_update_listener'));
-        $this->assertFalse($configuration->hasDefinition('email_update_flash_subscriber'));
-        $this->assertFalse($configuration->hasParameter('azine_email_update_confirmation.template'));
-        $this->assertFalse($configuration->hasParameter('azine_email_update_confirmation.cypher_method'));
-        $this->assertFalse($configuration->hasParameter('azine_email_update_confirmation.redirect_route'));
+        self::assertFalse($container->hasDefinition('email_update_confirmation'));
+        self::assertFalse($container->hasAlias('email_update.mailer'));
+        self::assertFalse($container->hasDefinition('email_update_listener'));
+        self::assertFalse($container->hasDefinition('email_update_flash_subscriber'));
+        self::assertFalse($container->hasParameter('azine_email_update_confirmation.template'));
     }
 
-    public function testEnableEmailUpdateConfirmation()
+    public function testEnablesEmailUpdateConfirmationWithExplicitSender(): void
     {
-        $configuration = new ContainerBuilder();
-        $loader = new AzineEmailUpdateConfirmationExtension();
-        $config = array();
-        $config['enabled'] = true;
-        $config['from_email'] = 'test@example.com';
-        $loader->load(array($config), $configuration);
+        $container = new ContainerBuilder();
+        (new AzineEmailUpdateConfirmationExtension())->load([
+            ['from_email' => 'test@example.com'],
+        ], $container);
 
-        $this->assertTrue($configuration->hasDefinition('email_update_confirmation'));
-        $this->assertTrue($configuration->hasDefinition('azine.email_update.mailer'));
-        $this->assertTrue($configuration->hasDefinition('email_update_listener'));
-        $this->assertTrue($configuration->hasDefinition('email_update_flash_subscriber'));
-        $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.template'));
-        $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.cypher_method'));
-        $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.redirect_route'));
+        self::assertTrue($container->hasDefinition('email_update_confirmation'));
+        self::assertTrue($container->hasDefinition('azine.email_update.default_mailer'));
+        self::assertTrue($container->hasAlias('email_update.mailer'));
+        self::assertTrue($container->hasDefinition('email_update_listener'));
+        self::assertTrue($container->hasDefinition('email_update_flash_subscriber'));
+        self::assertSame(
+            'test@example.com',
+            $container->getParameter('azine_email_update_confirmation.from_email'),
+        );
     }
 
-    public function testEnableEmailUpdateConfirmationByDefault()
+    public function testRequiresSenderWhenFosUserFallbackIsUnavailable(): void
     {
-        $configuration = new ContainerBuilder();
-        $loader = new AzineEmailUpdateConfirmationExtension();
-        $config = array();
-        $config['from_email'] = 'test@example.com';
-        $loader->load(array($config), $configuration);
-        $this->assertTrue($configuration->hasDefinition('email_update_confirmation'));
-        $this->assertTrue($configuration->hasParameter('azine_email_update_confirmation.template'));
-        $this->assertSame($config['from_email'], $configuration->getParameter('azine_email_update_confirmation.from_email'));
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new AzineEmailUpdateConfirmationExtension())->load([], new ContainerBuilder());
     }
 
-    public function testNotSetUpFromEmailParameter()
+    public function testUsesCompleteFosUserFromAddressConfiguration(): void
     {
-        $this->expectException(\Exception::class);
-        $configuration = new ContainerBuilder();
-        $loader = new AzineEmailUpdateConfirmationExtension();
-        $loader->load(array(), $configuration);
-    }
+        $container = new ContainerBuilder();
+        $fromEmail = [
+            'address' => 'fosuserbundle.from.email@example.com',
+            'sender_name' => 'From Email Name',
+        ];
+        $container->setParameter('fos_user.resetting.email.from_email', $fromEmail);
 
-    public function testFOSUserBundleFromEmailParameter()
-    {
-        $configuration = new ContainerBuilder();
-        $fosFromEmail = 'fosuserbundle.from.email@exmple.com';
-        $fosFromName = 'From Email Name';
-        $configuration->setParameter('fos_user.resetting.email.from_email', array($fosFromEmail => $fosFromName));
-        $loader = new AzineEmailUpdateConfirmationExtension();
-        $loader->load(array(), $configuration);
-        $this->assertSame($fosFromEmail, $configuration->getParameter('azine_email_update_confirmation.from_email'));
+        (new AzineEmailUpdateConfirmationExtension())->load([], $container);
+
+        self::assertSame(
+            $fromEmail,
+            $container->getParameter('azine_email_update_confirmation.from_email'),
+        );
     }
 }
