@@ -1,99 +1,67 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Controller;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
 use FOS\UserBundle\Event\UserEvent;
-use FOS\UserBundle\Model\User;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Controller managing the confirmation of changed user email.
- *
- * @author Dominik Businger <git@azine.me>
- */
 class ConfirmEmailUpdateController extends AbstractController
 {
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
-    /**
-     * @var UserManagerInterface
-     */
-    private $userManager;
-
-    /**
-     * @var EmailUpdateConfirmation
-     */
-    private $emailUpdateConfirmation;
-
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
-
-    /**
-     * @var CanonicalFieldsUpdater
-     */
-    private $canonicalFieldsUpdater;
-
-    public function __construct(EventDispatcherInterface $eventDispatcher, UserManagerInterface $userManager, EmailUpdateConfirmation $emailUpdateConfirmation, TranslatorInterface $translator, CanonicalFieldsUpdater $canonicalFieldsUpdater)
-    {
-        $this->eventDispatcher = $eventDispatcher;
-        $this->userManager = $userManager;
-        $this->emailUpdateConfirmation = $emailUpdateConfirmation;
-        $this->translator = $translator;
-        $this->canonicalFieldsUpdater = $canonicalFieldsUpdater;
+    public function __construct(
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly UserManagerInterface $userManager,
+        private readonly EmailUpdateConfirmation $emailUpdateConfirmation,
+        private readonly TranslatorInterface $translator,
+        private readonly CanonicalFieldsUpdater $canonicalFieldsUpdater,
+    ) {
     }
 
-    /**
-     * Confirm user`s email update.
-     *
-     * @param Request $request
-     * @param string  $token
-     * @param string  $redirectRoute
-     *
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
-     */
-    public function confirmEmailUpdateAction(Request $request, $token, $redirectRoute)
-    {
-        /** @var User $user */
+    public function confirmEmailUpdateAction(
+        Request $request,
+        string $token,
+        string $redirectRoute,
+    ): RedirectResponse {
         $user = $this->userManager->findUserByConfirmationToken($token);
-
-        // If user was not found throw 404 exception
-        if (!$user) {
+        if (!$user instanceof UserInterface) {
             throw $this->createNotFoundException($this->translator->trans('email_update.error.message'));
         }
 
-        // Show invalid token message if the user id found via token does not match the current users id (e.g. anon. or other user)
-        if (!($this->getUser() instanceof UserInterface) || ($user->getId() !== $this->getUser()->getId())) {
+        $authenticatedUser = $this->getUser();
+        if (
+            !$authenticatedUser instanceof UserInterface
+            || (string) $user->getId() !== (string) $authenticatedUser->getId()
+        ) {
             throw new AccessDeniedException($this->translator->trans('email_update.error.message'));
         }
 
-        $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $request->get('target'));
-
-        // Update user email
-        if ($newEmail) {
-            $user->setConfirmationToken($this->emailUpdateConfirmation->getEmailConfirmedToken());
-            $user->setEmail($newEmail);
-            $user->setEmail($this->canonicalFieldsUpdater->canonicalizeEmail($newEmail));
+        $target = $request->query->getString('target');
+        if ('' === $target) {
+            throw $this->createNotFoundException($this->translator->trans('email_update.error.message'));
         }
 
+        $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $target);
+        $user->setConfirmationToken($this->emailUpdateConfirmation->getEmailConfirmedToken());
+        $user->setEmail($newEmail);
+        $user->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($newEmail));
         $this->userManager->updateUser($user);
 
-        $event = new UserEvent($user, $request);
-        $this->eventDispatcher->dispatch($event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS);
+        $this->eventDispatcher->dispatch(
+            new UserEvent($user, $request),
+            AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS,
+        );
 
-        return $this->redirect($this->generateUrl($redirectRoute));
+        return $this->redirectToRoute($redirectRoute);
     }
 }
