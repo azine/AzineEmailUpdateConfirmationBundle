@@ -1,113 +1,89 @@
 <?php
 
-namespace Azine\EmailUpdateConfirmationBundle\Tests;
+declare(strict_types=1);
 
+namespace Azine\EmailUpdateConfirmationBundle\Tests\Services;
+
+use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
-use FOS\UserBundle\Mailer\MailerInterface;
-use FOS\UserBundle\Model\User;
-use FOS\UserBundle\Util\TokenGenerator;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
+use FOS\UserBundle\Model\UserInterface;
+use FOS\UserBundle\Util\TokenGeneratorInterface;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class EmailUpdateConfirmationTest extends \PHPUnit\Framework\TestCase
+class EmailUpdateConfirmationTest extends TestCase
 {
-    /** @var ExpressionFunctionProviderInterface */
-    private $provider;
-    /** @var RouterInterface */
-    private $router;
-    /** @var TokenGenerator */
-    private $tokenGenerator;
-    /** @var MailerInterface */
-    private $mailer;
-    /** @var EventDispatcher */
-    private $eventDispatcher;
-    /** @var string */
-    private $redirectRoute = 'redirect_route';
-    /** @var string */
-    private $token = 'test_token';
-    /** @var EmailUpdateConfirmation */
-    private $emailUpdateConfirmation;
-    /** @var string */
-    private $emailTest = 'foo@example.com';
-    /** @var User */
-    private $user;
-    private $cypher_method = 'AES-128-CBC';
+    private const TOKEN = 'test-token';
+    private const EMAIL = 'foo@example.com';
 
-    /** @var ValidatorInterface */
-    private $emailValidator;
-    /** @var ConstraintViolationList */
-    private $constraintViolationList;
-
-    protected function setUp(): void
+    public function testEncryptsAndDecryptsEmail(): void
     {
-        $this->emailValidator = $this->getMockBuilder('Symfony\Component\Validator\Validator\RecursiveValidator')->disableOriginalConstructor()->getMock();
-        $this->constraintViolationList = $this->getMockBuilder('Symfony\Component\Validator\ConstraintViolationList')->disableOriginalConstructor()->getMock();
+        $service = $this->createService(new ConstraintViolationList());
+        $encryptedEmail = $service->encryptEmailValue(self::TOKEN, self::EMAIL);
 
-        $this->provider = $this->getMockBuilder('Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface')->getMock();
-        $this->user = $this->getMockBuilder('FOS\UserBundle\Model\User')
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->router = $this->getMockBuilder('Symfony\Bundle\FrameworkBundle\Routing\Router')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->tokenGenerator = $this->getMockBuilder('FOS\UserBundle\Util\TokenGenerator')->disableOriginalConstructor()->getMock();
-        $this->mailer = $this->createMock('Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface');
-        $this->eventDispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcherInterface')->getMock();
-
-        $this->emailUpdateConfirmation = new EmailUpdateConfirmation($this->router, $this->tokenGenerator, $this->mailer, $this->eventDispatcher, $this->emailValidator, $this->redirectRoute, $this->cypher_method);
-
-        $this->user->expects($this->any())
-            ->method('getConfirmationToken')
-            ->will($this->returnValue($this->token));
+        self::assertNotSame(self::EMAIL, $encryptedEmail);
+        self::assertSame(self::EMAIL, $service->decryptEmailValue(self::TOKEN, $encryptedEmail));
     }
 
-    public function testFetchEncryptedEmailFromConfirmationLinkMethod()
+    public function testFetchesEmailFromConfirmationPayload(): void
     {
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
-        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->token, $this->emailTest);
+        $service = $this->createService(new ConstraintViolationList());
+        $user = $this->createMock(UserInterface::class);
+        $user->method('getConfirmationToken')->willReturn(self::TOKEN);
 
-        $email = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($this->user, $encryptedEmail);
-        $this->assertSame($this->emailTest, $email);
+        $encryptedEmail = $service->encryptEmailValue(self::TOKEN, self::EMAIL);
+
+        self::assertSame(
+            self::EMAIL,
+            $service->fetchEncryptedEmailFromConfirmationLink($user, $encryptedEmail),
+        );
     }
 
-    public function testEncryptDecryptEmail()
+    public function testRejectsDecryptedInvalidEmail(): void
     {
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
-        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $this->emailTest);
-        $this->assertSame($this->emailTest, $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail));
-    }
+        $violations = new ConstraintViolationList([
+            $this->createMock(ConstraintViolationInterface::class),
+        ]);
+        $service = $this->createService($violations);
+        $encryptedEmail = $service->encryptEmailValue(self::TOKEN, 'not-an-email');
 
-    public function testDecryptFromWrongEmailFormat()
-    {
         $this->expectException(\InvalidArgumentException::class);
-        $this->emailValidator->expects($this->once())->method('validate')->will($this->returnValue($this->constraintViolationList));
-
-        $this->constraintViolationList->expects($this->once())->method('count')->will($this->returnValue(1));
-        $wrongEmail = 'fooexample.com';
-
-        $encryptedEmail = $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), $wrongEmail);
-        $this->emailUpdateConfirmation->decryptEmailValue($this->user->getConfirmationToken(), $encryptedEmail);
+        $service->decryptEmailValue(self::TOKEN, $encryptedEmail);
     }
 
-    public function testIntegerIsSetInsteadOfEmailString()
+    public function testRejectsMalformedPayload(): void
     {
+        $service = $this->createService(new ConstraintViolationList());
+
         $this->expectException(\InvalidArgumentException::class);
-        $this->emailUpdateConfirmation->encryptEmailValue($this->user->getConfirmationToken(), 123);
+        $service->decryptEmailValue(self::TOKEN, 'not-valid-base64***');
     }
 
-    public function testIntegerIsSetInsteadOfConfirmationTokenStringForEncryption()
+    public function testRejectsEmptyToken(): void
     {
+        $service = $this->createService(new ConstraintViolationList());
+
         $this->expectException(\InvalidArgumentException::class);
-        $this->emailUpdateConfirmation->encryptEmailValue(123, $this->emailTest);
+        $service->encryptEmailValue('', self::EMAIL);
     }
 
-    public function testIntegerIsSetInsteadOfConfirmationTokenStringForDecryption()
+    private function createService(ConstraintViolationList $violations): EmailUpdateConfirmation
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->emailUpdateConfirmation->decryptEmailValue(123, $this->emailTest);
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator->method('validate')->willReturn($violations);
+
+        return new EmailUpdateConfirmation(
+            $this->createMock(RouterInterface::class),
+            $this->createMock(TokenGeneratorInterface::class),
+            $this->createMock(EmailUpdateConfirmationMailerInterface::class),
+            $this->createMock(EventDispatcherInterface::class),
+            $validator,
+            'redirect_route',
+            'AES-128-CBC',
+        );
     }
 }
