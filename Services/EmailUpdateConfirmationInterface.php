@@ -1,35 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use FOS\UserBundle\Model\UserInterface;
+use Symfony\Component\HttpFoundation\Request;
 
-/**
- * Interface EmailUpdateConfirmationInterface.
- */
 interface EmailUpdateConfirmationInterface
 {
-    /**
-     * @param UserInterface $user
-     * @param string        $hashedEmail
-     *
-     * @return string
-     */
-    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail);
+    public function generateConfirmationLink(Request $request, UserInterface $user, string $email): string;
 
-    /**
-     * @param string $confirmationToken
-     * @param string $email
-     *
-     * @return string Encrypted email value
-     */
-    public function encryptEmailValue($confirmationToken, $email);
+    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, string $encryptedEmail): string;
 
-    /**
-     * @param string $confirmationToken
-     * @param string $encryptedEmail
-     *
-     * @return string Decrypted email value
-     */
-    public function decryptEmailValue($confirmationToken, $encryptedEmail);
+    public function encryptEmailValue(string $confirmationToken, string $email): string;
+
+    public function decryptEmailValue(string $confirmationToken, string $encryptedEmail): string;
+
+    public function getEmailConfirmedToken(): string;
 }
