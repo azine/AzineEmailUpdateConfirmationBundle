@@ -1,245 +1,166 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use FOS\UserBundle\Event\UserEvent;
-use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\UserInterface;
-use FOS\UserBundle\Util\TokenGenerator;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
+use FOS\UserBundle\Util\TokenGeneratorInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 {
-    const EMAIL_CONFIRMED = 'email_confirmed';
+    public const EMAIL_CONFIRMED = 'email_confirmed';
+    private const DEFAULT_CIPHER = 'AES-128-CBC';
+    private const CONFIRMATION_ROUTE = 'user_update_email_confirm';
 
-    /**
-     * @var EmailUpdateConfirmationMailerInterface
-     */
-    private $mailer;
-
-    /**
-     * @var Router
-     */
-    private $router;
-
-    /**
-     * @var TokenGenerator
-     */
-    private $tokenGenerator;
-
-    /**
-     * @var string
-     */
-    private $encryptionMode;
-
-    /**
-     * @var ValidatorInterface
-     */
-    private $validator;
-
-    /**
-     * @var string Route for confirmation link
-     */
-    private $confirmationRoute = 'user_update_email_confirm';
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
-    /**
-     * @var string
-     */
-    private $redirectRoute;
+    private readonly string $encryptionMode;
 
     public function __construct(
-        Router $router,
-        TokenGenerator $tokenGenerator,
-        EmailUpdateConfirmationMailerInterface $mailer,
-        EventDispatcherInterface $eventDispatcher,
-        ValidatorInterface $validator,
-        $redirectRoute,
-        $mode = null
+        private readonly RouterInterface $router,
+        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly EmailUpdateConfirmationMailerInterface $mailer,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ValidatorInterface $validator,
+        private readonly string $redirectRoute,
+        ?string $mode = null,
     ) {
-        $this->router = $router;
-        $this->tokenGenerator = $tokenGenerator;
-        $this->mailer = $mailer;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->validator = $validator;
-        $this->redirectRoute = $redirectRoute;
+        $this->encryptionMode = $mode ?: self::DEFAULT_CIPHER;
 
-        if (!$mode) {
-            $mode = openssl_get_cipher_methods(false)[0];
+        $supportedCiphers = array_map('strtolower', openssl_get_cipher_methods(false));
+        if (!in_array(strtolower($this->encryptionMode), $supportedCiphers, true)) {
+            throw new \InvalidArgumentException(sprintf(
+                'The OpenSSL cipher "%s" is not supported by this PHP runtime.',
+                $this->encryptionMode,
+            ));
         }
-        $this->encryptionMode = $mode;
     }
 
-    /**
-     * Get $mailer.
-     *
-     * @return MailerInterface
-     */
-    public function getMailer()
+    public function getMailer(): EmailUpdateConfirmationMailerInterface
     {
         return $this->mailer;
     }
 
-    /**
-     * Generate new confirmation link for new email based on user confirmation
-     * token and hashed new user email.
-     *
-     * @param Request $request
-     *
-     * @return string
-     */
-    public function generateConfirmationLink(Request $request, UserInterface $user, $email)
+    public function generateConfirmationLink(Request $request, UserInterface $user, string $email): string
     {
         if (!$user->getConfirmationToken()) {
-            $user->setConfirmationToken(
-                $this->tokenGenerator->generateToken()
-            );
+            $user->setConfirmationToken($this->tokenGenerator->generateToken());
         }
 
-        $encryptedEmail = $this->encryptEmailValue($user->getConfirmationToken(), $email);
+        $token = (string) $user->getConfirmationToken();
+        $confirmationParams = [
+            'token' => $token,
+            'target' => $this->encryptEmailValue($token, $email),
+            'redirectRoute' => $this->redirectRoute,
+        ];
 
-        $confirmationParams = array('token' => $user->getConfirmationToken(), 'target' => $encryptedEmail, 'redirectRoute' => $this->redirectRoute);
-
-        $event = new UserEvent($user, $request);
-
-        $this->eventDispatcher->dispatch($event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
+        $this->eventDispatcher->dispatch(
+            new UserEvent($user, $request),
+            AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE,
+        );
 
         return $this->router->generate(
-            $this->confirmationRoute,
+            self::CONFIRMATION_ROUTE,
             $confirmationParams,
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
 
-    /**
-     * Fetch email value from hashed part of confirmation link.
-     *
-     * @param UserInterface $user
-     * @param string        $hashedEmail
-     *
-     * @return string Encrypted email
-     */
-    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail)
-    {
-        //replace spaces with plus sign from hash, which could be replaced in url
-        $hashedEmail = str_replace(' ', '+', $hashedEmail);
-
-        $email = $this->decryptEmailValue($user->getConfirmationToken(), $hashedEmail);
-
-        return $email;
+    public function fetchEncryptedEmailFromConfirmationLink(
+        UserInterface $user,
+        string $encryptedEmail,
+    ): string {
+        return $this->decryptEmailValue(
+            (string) $user->getConfirmationToken(),
+            str_replace(' ', '+', $encryptedEmail),
+        );
     }
 
-    /**
-     * Get token which indicates that email was confirmed.
-     *
-     * @return string
-     */
-    public function getEmailConfirmedToken()
+    public function getEmailConfirmedToken(): string
     {
         return base64_encode(self::EMAIL_CONFIRMED);
     }
 
-    /**
-     * Return IV size.
-     *
-     * @return int
-     */
-    protected function getIvSize()
+    public function encryptEmailValue(string $confirmationToken, string $email): string
     {
-        return openssl_cipher_iv_length($this->encryptionMode);
-    }
+        $this->assertToken($confirmationToken);
 
-    /**
-     * Encrypt email value with specified user confirmation token.
-     *
-     * @param string $userConfirmationToken
-     * @param string $email
-     *
-     * @return string Encrypted email
-     */
-    public function encryptEmailValue($userConfirmationToken, $email)
-    {
-        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
-            throw new \InvalidArgumentException(
-                'Invalid user confirmation token value.'
-            );
-        }
-
-        if (!is_string($email)) {
-            throw new \InvalidArgumentException(
-                'Email to be encrypted should a string. '
-                .gettype($email).' given.'
-            );
-        }
-
-        $iv = openssl_random_pseudo_bytes($this->getIvSize());
-
+        $iv = random_bytes($this->getIvSize());
         $encryptedEmail = openssl_encrypt(
             $email,
             $this->encryptionMode,
-            pack('H*', hash('sha256', $userConfirmationToken)),
+            $this->deriveKey($confirmationToken),
             0,
-            $iv
+            $iv,
         );
 
-        $encryptedEmail = base64_encode($iv.$encryptedEmail);
-
-        return $encryptedEmail;
-    }
-
-    /**
-     * Decrypt email value with specified user confirmation token.
-     *
-     * @param string $userConfirmationToken
-     * @param string $encryptedEmail
-     *
-     * @return string Decrypted email
-     */
-    public function decryptEmailValue($userConfirmationToken, $encryptedEmail)
-    {
-        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
-            throw new \InvalidArgumentException(
-                'Invalid user confirmation token value.'
-            );
+        if (false === $encryptedEmail) {
+            throw new \RuntimeException('OpenSSL could not encrypt the email address.');
         }
 
-        $b64DecodedEmailHash = base64_decode($encryptedEmail);
+        return base64_encode($iv.$encryptedEmail);
+    }
+
+    public function decryptEmailValue(string $confirmationToken, string $encryptedEmail): string
+    {
+        $this->assertToken($confirmationToken);
+
+        $decoded = base64_decode($encryptedEmail, true);
         $ivSize = $this->getIvSize();
-
-        // Select IV part from encrypted value
-        $iv = substr($b64DecodedEmailHash, 0, $ivSize);
-
-        // Select email part from encrypted value
-        $preparedEncryptedEmail = substr($b64DecodedEmailHash, $ivSize);
+        if (false === $decoded || strlen($decoded) <= $ivSize) {
+            throw new \InvalidArgumentException('The encrypted email payload is malformed.');
+        }
 
         $decryptedEmail = openssl_decrypt(
-            $preparedEncryptedEmail,
+            substr($decoded, $ivSize),
             $this->encryptionMode,
-            pack('H*', hash('sha256', $userConfirmationToken)),
+            $this->deriveKey($confirmationToken),
             0,
-            $iv
+            substr($decoded, 0, $ivSize),
         );
 
-        // Trim decrypted email from nul byte before return
-        $email = rtrim($decryptedEmail, "\0");
+        if (false === $decryptedEmail) {
+            throw new \InvalidArgumentException('The email confirmation payload could not be decrypted.');
+        }
 
-        /** @var ConstraintViolationList $violationList */
-        $violationList = $this->validator->validate($email, new Email());
-        if ($violationList->count() > 0) {
-            throw new \InvalidArgumentException('Wrong email format was provided for decryptEmailValue function');
+        $email = rtrim($decryptedEmail, "\0");
+        if ($this->validator->validate($email, new Email())->count() > 0) {
+            throw new \InvalidArgumentException('The decrypted value is not a valid email address.');
         }
 
         return $email;
+    }
+
+    private function assertToken(string $confirmationToken): void
+    {
+        if ('' === $confirmationToken) {
+            throw new \InvalidArgumentException('The user confirmation token must not be empty.');
+        }
+    }
+
+    private function getIvSize(): int
+    {
+        $ivSize = openssl_cipher_iv_length($this->encryptionMode);
+        if (false === $ivSize || $ivSize < 1) {
+            throw new \RuntimeException(sprintf(
+                'Unable to determine the IV size for cipher "%s".',
+                $this->encryptionMode,
+            ));
+        }
+
+        return $ivSize;
+    }
+
+    private function deriveKey(string $confirmationToken): string
+    {
+        return pack('H*', hash('sha256', $confirmationToken));
     }
 }
