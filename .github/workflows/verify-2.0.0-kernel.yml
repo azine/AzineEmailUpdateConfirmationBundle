@@ -41,11 +41,6 @@ jobs:
                   "symfony/framework-bundle": "7.4.*",
                   "symfony/twig-bundle": "7.4.*"
               },
-              "autoload": {
-                  "psr-4": {
-                      "App\\\\": "src/"
-                  }
-              },
               "minimum-stability": "stable",
               "prefer-stable": true
           }
@@ -120,4 +115,4 @@ jobs:
               resource: '@AzineEmailUpdateConfirmationBundle/Resources/config/routing.yml'
           YAML
 
-          APP_ENV=test APP_DEBUG=0 php -r "require 'vendor/autoload.php'; \$kernel = new App\\Kernel('test', false); \$kernel->boot(); if (!\$kernel->getContainer()->has('router')) { exit(1); } \$kernel->shutdown();"
+          APP_ENV=test APP_DEBUG=0 php -r "require 'vendor/autoload.php'; require 'src/Kernel.php'; \$kernel = new App\\Kernel('test', false); \$kernel->boot(); if (!\$kernel->getContainer()->has('router')) { exit(1); } \$kernel->shutdown();"
