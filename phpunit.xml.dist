@@ -15,13 +15,14 @@
 
     <source>
         <include>
-            <directory suffix=".php">.</directory>
+            <file>AzineEmailUpdateConfirmationBundle.php</file>
+            <file>AzineEmailUpdateConfirmationEvents.php</file>
+            <directory suffix=".php">Controller</directory>
+            <directory suffix=".php">DependencyInjection</directory>
+            <directory suffix=".php">Doctrine</directory>
+            <directory suffix=".php">EventListener</directory>
+            <directory suffix=".php">Mailer</directory>
+            <directory suffix=".php">Services</directory>
         </include>
-        <exclude>
-            <directory>Tests</directory>
-            <directory>vendor</directory>
-        </exclude>
     </source>
-
-    <coverage includeUncoveredFiles="true"/>
 </phpunit>
