@@ -31,7 +31,7 @@ jobs:
           php-version: '8.5'
           tools: composer:v2
           coverage: none
-          extensions: ctype, iconv, intl, json, mbstring, openssl, tokenizer, xml
+          extensions: ctype, fileinfo, filter, iconv, intl, json, mailparse, mbstring, openssl, tokenizer, xml
 
       - name: Validate composer.json
         run: composer validate --strict --no-check-publish
