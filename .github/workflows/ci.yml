@@ -31,7 +31,7 @@ jobs:
           php-version: '8.5'
           tools: composer:v2
           coverage: none
-          extensions: ctype, iconv, intl, mbstring, openssl, tokenizer, xml
+          extensions: ctype, iconv, intl, json, mbstring, openssl, tokenizer, xml
 
       - name: Validate composer.json
         run: composer validate --strict --no-check-publish
@@ -52,5 +52,15 @@ jobs:
         if: matrix.dependencies == 'lowest'
         run: composer update --no-interaction --prefer-lowest --prefer-stable --prefer-dist
 
-      - name: Run tests
-        run: vendor/bin/phpunit -c phpunit.xml.dist
+      - name: Lint production and test code
+        run: composer lint
+
+      - name: Run test suite with diagnostics
+        run: >-
+          vendor/bin/phpunit -c phpunit.xml.dist
+          --display-deprecations
+          --display-phpunit-deprecations
+          --display-phpunit-notices
+          --fail-on-phpunit-notice
+          --display-notices
+          --display-skipped
