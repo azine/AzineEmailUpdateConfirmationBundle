@@ -48,7 +48,7 @@ class AzineEmailUpdateConfirmationMailerTest extends TestCase
         );
 
         $service->sendUpdateEmailConfirmation(
-            $this->createMock(UserInterface::class),
+            $this->createStub(UserInterface::class),
             'https://azine.me/confirm',
             'new@example.com',
         );
