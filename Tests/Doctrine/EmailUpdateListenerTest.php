@@ -6,7 +6,7 @@ namespace Azine\EmailUpdateConfirmationBundle\Tests\Doctrine;
 
 use Azine\EmailUpdateConfirmationBundle\Doctrine\EmailUpdateListener;
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
+use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmationInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
@@ -30,7 +30,7 @@ final class EmailUpdateListenerTest extends TestCase
 
         $user = $this->statefulUser($email, $canonical, $token);
 
-        $confirmation = $this->createMock(EmailUpdateConfirmation::class);
+        $confirmation = $this->createMock(EmailUpdateConfirmationInterface::class);
         $confirmation->method('getEmailConfirmedToken')->willReturn('confirmed-sentinel');
         $confirmation
             ->expects(self::once())
@@ -89,7 +89,7 @@ final class EmailUpdateListenerTest extends TestCase
         $token = 'confirmed-sentinel';
         $user = $this->statefulUser($email, $canonical, $token);
 
-        $confirmation = $this->createMock(EmailUpdateConfirmation::class);
+        $confirmation = $this->createMock(EmailUpdateConfirmationInterface::class);
         $confirmation->method('getEmailConfirmedToken')->willReturn('confirmed-sentinel');
         $confirmation->expects(self::never())->method('generateConfirmationLink');
 
