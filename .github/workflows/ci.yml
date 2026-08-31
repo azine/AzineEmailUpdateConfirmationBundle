@@ -55,12 +55,16 @@ jobs:
       - name: Lint production and test code
         run: composer lint
 
-      - name: Run test suite with diagnostics
+      - name: Run strict test suite
         run: >-
           vendor/bin/phpunit -c phpunit.xml.dist
           --display-deprecations
           --display-phpunit-deprecations
           --display-phpunit-notices
-          --fail-on-phpunit-notice
           --display-notices
           --display-skipped
+          --fail-on-deprecation
+          --fail-on-phpunit-deprecation
+          --fail-on-phpunit-notice
+          --fail-on-notice
+          --fail-on-skipped
