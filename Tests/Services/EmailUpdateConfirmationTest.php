@@ -134,7 +134,9 @@ final class EmailUpdateConfirmationTest extends TestCase
 
         $token = null;
         $user = $this->createMock(UserInterface::class);
-        $user->method('getConfirmationToken')->willReturnCallback(static fn () => $token);
+        $user->method('getConfirmationToken')->willReturnCallback(static function () use (&$token): ?string {
+            return $token;
+        });
         $user->method('setConfirmationToken')->willReturnCallback(static function (?string $newToken) use (&$token): void {
             $token = $newToken;
         });
