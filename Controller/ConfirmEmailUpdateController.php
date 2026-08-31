@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class ConfirmEmailUpdateController extends AbstractController
+final class ConfirmEmailUpdateController extends AbstractController
 {
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -25,13 +25,17 @@ class ConfirmEmailUpdateController extends AbstractController
         private readonly EmailUpdateConfirmation $emailUpdateConfirmation,
         private readonly TranslatorInterface $translator,
         private readonly CanonicalFieldsUpdater $canonicalFieldsUpdater,
+        private readonly string $redirectRoute,
     ) {
     }
 
+    /**
+     * $redirectRoute is accepted only for old pending links and is deliberately ignored.
+     */
     public function confirmEmailUpdateAction(
         Request $request,
         string $token,
-        string $redirectRoute,
+        ?string $redirectRoute = null,
     ): RedirectResponse {
         $user = $this->userManager->findUserByConfirmationToken($token);
         if (!$user instanceof UserInterface) {
@@ -51,7 +55,12 @@ class ConfirmEmailUpdateController extends AbstractController
             throw $this->createNotFoundException($this->translator->trans('email_update.error.message'));
         }
 
-        $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $target);
+        try {
+            $newEmail = $this->emailUpdateConfirmation->fetchEncryptedEmailFromConfirmationLink($user, $target);
+        } catch (\InvalidArgumentException|\RuntimeException) {
+            throw $this->createNotFoundException($this->translator->trans('email_update.error.message'));
+        }
+
         $user->setConfirmationToken($this->emailUpdateConfirmation->getEmailConfirmedToken());
         $user->setEmail($newEmail);
         $user->setEmailCanonical($this->canonicalFieldsUpdater->canonicalizeEmail($newEmail));
@@ -62,6 +71,6 @@ class ConfirmEmailUpdateController extends AbstractController
             AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS,
         );
 
-        return $this->redirectToRoute($redirectRoute);
+        return $this->redirectToRoute($this->redirectRoute);
     }
 }

@@ -12,7 +12,12 @@ services:
             $eventDispatcher: '@event_dispatcher'
             $validator: '@validator'
             $redirectRoute: '%azine_email_update_confirmation.redirect_route%'
-            $mode: '%azine_email_update_confirmation.cypher_method%'
+            $mode: '%azine_email_update_confirmation.cipher_method%'
+            $confirmationTtl: '%azine_email_update_confirmation.confirmation_ttl%'
+            $allowLegacyPayloads: '%azine_email_update_confirmation.allow_legacy_payloads%'
+
+    Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmationInterface:
+        alias: email_update_confirmation
 
     azine.email_update.default_mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer
@@ -34,7 +39,8 @@ services:
             $canonicalFieldsUpdater: '@fos_user.util.canonical_fields_updater'
             $mailer: '@email_update.mailer'
         tags:
-            - { name: doctrine.event_listener, event: preUpdate, lazy: true }
+            - { name: doctrine.event_listener, event: onFlush, lazy: true }
+            - { name: doctrine.event_listener, event: postFlush, lazy: true }
 
     Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController:
         arguments:
@@ -43,7 +49,10 @@ services:
             $emailUpdateConfirmation: '@email_update_confirmation'
             $translator: '@translator'
             $canonicalFieldsUpdater: '@fos_user.util.canonical_fields_updater'
+            $redirectRoute: '%azine_email_update_confirmation.redirect_route%'
         public: true
+        tags:
+            - { name: controller.service_arguments }
 
     email_update_flash_subscriber:
         class: Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener

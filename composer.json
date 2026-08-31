@@ -16,8 +16,15 @@
             "email": "github@azine-it.ch"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/azine/email-bundle"
+        }
+    ],
     "require": {
         "php": "^8.5",
+        "ext-json": "*",
         "ext-openssl": "*",
         "doctrine/orm": "^3.6",
         "friendsofsymfony/user-bundle": "^4.1",
@@ -38,10 +45,14 @@
         "twig/twig": "^3.14"
     },
     "require-dev": {
+        "azine/email-bundle": "^5.0.1",
         "doctrine/doctrine-bundle": "^2.15",
         "friendsofphp/php-cs-fixer": "^3.90",
-        "phpunit/phpunit": "^12.0",
+        "phpunit/phpunit": "^12.5",
         "symfony/phpunit-bridge": "^7.4"
+    },
+    "suggest": {
+        "azine/email-bundle": "Use the application's branded Azine Email Bundle templates for confirmation messages."
     },
     "autoload": {
         "psr-4": {
@@ -54,6 +65,7 @@
         }
     },
     "scripts": {
+        "lint": "find . -path './vendor' -prune -o -path './.git' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l",
         "test": "phpunit -c phpunit.xml.dist"
     },
     "config": {

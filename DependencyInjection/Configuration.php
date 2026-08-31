@@ -7,7 +7,7 @@ namespace Azine\EmailUpdateConfirmationBundle\DependencyInjection;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -18,13 +18,27 @@ class Configuration implements ConfigurationInterface
                 ->booleanNode('enabled')
                     ->defaultTrue()
                 ->end()
+                ->scalarNode('cipher_method')
+                    ->cannotBeEmpty()
+                    ->defaultValue('AES-128-CBC')
+                ->end()
                 ->scalarNode('cypher_method')
                     ->defaultNull()
+                    ->info('Deprecated misspelling retained for migration; use cipher_method.')
+                ->end()
+                ->integerNode('confirmation_ttl')
+                    ->min(60)
+                    ->defaultValue(86400)
+                ->end()
+                ->booleanNode('allow_legacy_payloads')
+                    ->defaultTrue()
                 ->end()
                 ->scalarNode('mailer')
+                    ->cannotBeEmpty()
                     ->defaultValue('azine.email_update.default_mailer')
                 ->end()
                 ->scalarNode('email_template')
+                    ->cannotBeEmpty()
                     ->defaultValue('@AzineEmailUpdateConfirmation/Email/email_update_confirmation.txt.twig')
                 ->end()
                 ->variableNode('from_email')
