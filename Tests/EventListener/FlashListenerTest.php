@@ -27,7 +27,7 @@ class FlashListenerTest extends TestCase
         $requestStack = new RequestStack();
         $requestStack->push($request);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
             ->willReturnCallback(static fn (string $message): string => 'translated:'.$message);
