@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Azine\EmailUpdateConfirmationBundle\Doctrine;
 
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
-use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation;
+use Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmationInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
@@ -25,7 +25,7 @@ final class EmailUpdateListener
     private array $pendingNotifications = [];
 
     public function __construct(
-        private readonly EmailUpdateConfirmation $emailUpdateConfirmation,
+        private readonly EmailUpdateConfirmationInterface $emailUpdateConfirmation,
         private readonly RequestStack $requestStack,
         private readonly CanonicalFieldsUpdater $canonicalFieldsUpdater,
         private readonly EmailUpdateConfirmationMailerInterface $mailer,
