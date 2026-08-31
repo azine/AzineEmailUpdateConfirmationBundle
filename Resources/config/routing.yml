@@ -1,4 +1,11 @@
 user_update_email_confirm:
+    path: /confirm-email-update/{token}
+    controller: Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController::confirmEmailUpdateAction
+    methods: [GET]
+
+user_update_email_confirm_legacy:
     path: /confirm-email-update/{token}/{redirectRoute}
-    defaults: { _controller: AzineEmailUpdateConfirmationBundle:ConfirmEmailUpdate:confirmEmailUpdate }
-    methods: GET
+    controller: Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController::confirmEmailUpdateAction
+    methods: [GET]
+    requirements:
+        redirectRoute: '.+'

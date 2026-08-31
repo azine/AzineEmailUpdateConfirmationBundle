@@ -1,245 +1,298 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\Services;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface;
 use FOS\UserBundle\Event\UserEvent;
-use FOS\UserBundle\Mailer\MailerInterface;
 use FOS\UserBundle\Model\UserInterface;
-use FOS\UserBundle\Util\TokenGenerator;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
+use FOS\UserBundle\Util\TokenGeneratorInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
+final class EmailUpdateConfirmation implements EmailUpdateConfirmationInterface
 {
-    const EMAIL_CONFIRMED = 'email_confirmed';
+    public const EMAIL_CONFIRMED = 'email_confirmed';
 
-    /**
-     * @var EmailUpdateConfirmationMailerInterface
-     */
-    private $mailer;
+    private const DEFAULT_CIPHER = 'AES-128-CBC';
+    private const CONFIRMATION_ROUTE = 'user_update_email_confirm';
+    private const PAYLOAD_PREFIX = 'v2.';
+    private const MAC_BYTES = 32;
 
-    /**
-     * @var Router
-     */
-    private $router;
-
-    /**
-     * @var TokenGenerator
-     */
-    private $tokenGenerator;
-
-    /**
-     * @var string
-     */
-    private $encryptionMode;
-
-    /**
-     * @var ValidatorInterface
-     */
-    private $validator;
-
-    /**
-     * @var string Route for confirmation link
-     */
-    private $confirmationRoute = 'user_update_email_confirm';
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
-    /**
-     * @var string
-     */
-    private $redirectRoute;
+    private readonly string $encryptionMode;
+    private readonly \Closure $nowProvider;
 
     public function __construct(
-        Router $router,
-        TokenGenerator $tokenGenerator,
-        EmailUpdateConfirmationMailerInterface $mailer,
-        EventDispatcherInterface $eventDispatcher,
-        ValidatorInterface $validator,
-        $redirectRoute,
-        $mode = null
+        private readonly RouterInterface $router,
+        private readonly TokenGeneratorInterface $tokenGenerator,
+        private readonly EmailUpdateConfirmationMailerInterface $mailer,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ValidatorInterface $validator,
+        private readonly string $redirectRoute,
+        ?string $mode = null,
+        private readonly int $confirmationTtl = 86400,
+        private readonly bool $allowLegacyPayloads = true,
+        ?\Closure $nowProvider = null,
     ) {
-        $this->router = $router;
-        $this->tokenGenerator = $tokenGenerator;
-        $this->mailer = $mailer;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->validator = $validator;
-        $this->redirectRoute = $redirectRoute;
+        $this->encryptionMode = $mode ?: self::DEFAULT_CIPHER;
+        $this->nowProvider = $nowProvider ?? static fn (): int => time();
 
-        if (!$mode) {
-            $mode = openssl_get_cipher_methods(false)[0];
+        if ($this->confirmationTtl < 60) {
+            throw new \InvalidArgumentException('The email confirmation TTL must be at least 60 seconds.');
         }
-        $this->encryptionMode = $mode;
+
+        $supportedCiphers = array_map('strtolower', openssl_get_cipher_methods(false));
+        if (!in_array(strtolower($this->encryptionMode), $supportedCiphers, true)) {
+            throw new \InvalidArgumentException(sprintf(
+                'The OpenSSL cipher "%s" is not supported by this PHP runtime.',
+                $this->encryptionMode,
+            ));
+        }
+
+        $this->getIvSize();
     }
 
-    /**
-     * Get $mailer.
-     *
-     * @return MailerInterface
-     */
-    public function getMailer()
+    public function getMailer(): EmailUpdateConfirmationMailerInterface
     {
         return $this->mailer;
     }
 
-    /**
-     * Generate new confirmation link for new email based on user confirmation
-     * token and hashed new user email.
-     *
-     * @param Request $request
-     *
-     * @return string
-     */
-    public function generateConfirmationLink(Request $request, UserInterface $user, $email)
+    public function generateConfirmationLink(Request $request, UserInterface $user, string $email): string
     {
         if (!$user->getConfirmationToken()) {
-            $user->setConfirmationToken(
-                $this->tokenGenerator->generateToken()
-            );
+            $user->setConfirmationToken($this->tokenGenerator->generateToken());
         }
 
-        $encryptedEmail = $this->encryptEmailValue($user->getConfirmationToken(), $email);
+        $token = (string) $user->getConfirmationToken();
+        $confirmationParams = [
+            'token' => $token,
+            'target' => $this->encryptEmailValue($token, $email),
+        ];
 
-        $confirmationParams = array('token' => $user->getConfirmationToken(), 'target' => $encryptedEmail, 'redirectRoute' => $this->redirectRoute);
-
-        $event = new UserEvent($user, $request);
-
-        $this->eventDispatcher->dispatch($event, AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE);
+        $this->eventDispatcher->dispatch(
+            new UserEvent($user, $request),
+            AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE,
+        );
 
         return $this->router->generate(
-            $this->confirmationRoute,
+            self::CONFIRMATION_ROUTE,
             $confirmationParams,
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
 
-    /**
-     * Fetch email value from hashed part of confirmation link.
-     *
-     * @param UserInterface $user
-     * @param string        $hashedEmail
-     *
-     * @return string Encrypted email
-     */
-    public function fetchEncryptedEmailFromConfirmationLink(UserInterface $user, $hashedEmail)
-    {
-        //replace spaces with plus sign from hash, which could be replaced in url
-        $hashedEmail = str_replace(' ', '+', $hashedEmail);
-
-        $email = $this->decryptEmailValue($user->getConfirmationToken(), $hashedEmail);
-
-        return $email;
+    public function fetchEncryptedEmailFromConfirmationLink(
+        UserInterface $user,
+        string $encryptedEmail,
+    ): string {
+        return $this->decryptEmailValue(
+            (string) $user->getConfirmationToken(),
+            str_replace(' ', '+', $encryptedEmail),
+        );
     }
 
-    /**
-     * Get token which indicates that email was confirmed.
-     *
-     * @return string
-     */
-    public function getEmailConfirmedToken()
+    public function getEmailConfirmedToken(): string
     {
         return base64_encode(self::EMAIL_CONFIRMED);
     }
 
-    /**
-     * Return IV size.
-     *
-     * @return int
-     */
-    protected function getIvSize()
+    public function encryptEmailValue(string $confirmationToken, string $email): string
     {
-        return openssl_cipher_iv_length($this->encryptionMode);
-    }
+        $this->assertToken($confirmationToken);
+        $this->assertValidEmail($email);
 
-    /**
-     * Encrypt email value with specified user confirmation token.
-     *
-     * @param string $userConfirmationToken
-     * @param string $email
-     *
-     * @return string Encrypted email
-     */
-    public function encryptEmailValue($userConfirmationToken, $email)
-    {
-        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
-            throw new \InvalidArgumentException(
-                'Invalid user confirmation token value.'
-            );
-        }
+        $plaintext = json_encode([
+            'email' => $email,
+            'expires_at' => ($this->nowProvider)() + $this->confirmationTtl,
+        ], JSON_THROW_ON_ERROR);
 
-        if (!is_string($email)) {
-            throw new \InvalidArgumentException(
-                'Email to be encrypted should a string. '
-                .gettype($email).' given.'
-            );
-        }
-
-        $iv = openssl_random_pseudo_bytes($this->getIvSize());
-
-        $encryptedEmail = openssl_encrypt(
-            $email,
+        $iv = random_bytes($this->getIvSize());
+        $ciphertext = openssl_encrypt(
+            $plaintext,
             $this->encryptionMode,
-            pack('H*', hash('sha256', $userConfirmationToken)),
-            0,
-            $iv
+            $this->deriveEncryptionKey($confirmationToken),
+            OPENSSL_RAW_DATA,
+            $iv,
         );
 
-        $encryptedEmail = base64_encode($iv.$encryptedEmail);
+        if (false === $ciphertext) {
+            throw new \RuntimeException('OpenSSL could not encrypt the email confirmation payload.');
+        }
 
-        return $encryptedEmail;
+        $mac = hash_hmac(
+            'sha256',
+            $iv.$ciphertext,
+            $this->deriveMacKey($confirmationToken),
+            true,
+        );
+
+        return self::PAYLOAD_PREFIX.$this->base64UrlEncode($iv.$mac.$ciphertext);
     }
 
-    /**
-     * Decrypt email value with specified user confirmation token.
-     *
-     * @param string $userConfirmationToken
-     * @param string $encryptedEmail
-     *
-     * @return string Decrypted email
-     */
-    public function decryptEmailValue($userConfirmationToken, $encryptedEmail)
+    public function decryptEmailValue(string $confirmationToken, string $encryptedEmail): string
     {
-        if (!$userConfirmationToken || !is_string($userConfirmationToken)) {
-            throw new \InvalidArgumentException(
-                'Invalid user confirmation token value.'
+        $this->assertToken($confirmationToken);
+
+        if (str_starts_with($encryptedEmail, self::PAYLOAD_PREFIX)) {
+            return $this->decryptAuthenticatedPayload(
+                $confirmationToken,
+                substr($encryptedEmail, strlen(self::PAYLOAD_PREFIX)),
             );
         }
 
-        $b64DecodedEmailHash = base64_decode($encryptedEmail);
+        if (!$this->allowLegacyPayloads) {
+            throw new \InvalidArgumentException('Legacy email confirmation payloads are disabled.');
+        }
+
+        return $this->decryptLegacyPayload($confirmationToken, $encryptedEmail);
+    }
+
+    private function decryptAuthenticatedPayload(string $confirmationToken, string $payload): string
+    {
+        $decoded = $this->base64UrlDecode($payload);
         $ivSize = $this->getIvSize();
 
-        // Select IV part from encrypted value
-        $iv = substr($b64DecodedEmailHash, 0, $ivSize);
-
-        // Select email part from encrypted value
-        $preparedEncryptedEmail = substr($b64DecodedEmailHash, $ivSize);
-
-        $decryptedEmail = openssl_decrypt(
-            $preparedEncryptedEmail,
-            $this->encryptionMode,
-            pack('H*', hash('sha256', $userConfirmationToken)),
-            0,
-            $iv
-        );
-
-        // Trim decrypted email from nul byte before return
-        $email = rtrim($decryptedEmail, "\0");
-
-        /** @var ConstraintViolationList $violationList */
-        $violationList = $this->validator->validate($email, new Email());
-        if ($violationList->count() > 0) {
-            throw new \InvalidArgumentException('Wrong email format was provided for decryptEmailValue function');
+        if (strlen($decoded) <= $ivSize + self::MAC_BYTES) {
+            throw new \InvalidArgumentException('The encrypted email payload is malformed.');
         }
 
+        $iv = substr($decoded, 0, $ivSize);
+        $mac = substr($decoded, $ivSize, self::MAC_BYTES);
+        $ciphertext = substr($decoded, $ivSize + self::MAC_BYTES);
+
+        $expectedMac = hash_hmac(
+            'sha256',
+            $iv.$ciphertext,
+            $this->deriveMacKey($confirmationToken),
+            true,
+        );
+
+        if (!hash_equals($expectedMac, $mac)) {
+            throw new \InvalidArgumentException('The email confirmation payload has been modified.');
+        }
+
+        $plaintext = openssl_decrypt(
+            $ciphertext,
+            $this->encryptionMode,
+            $this->deriveEncryptionKey($confirmationToken),
+            OPENSSL_RAW_DATA,
+            $iv,
+        );
+
+        if (false === $plaintext) {
+            throw new \InvalidArgumentException('The email confirmation payload could not be decrypted.');
+        }
+
+        try {
+            $data = json_decode($plaintext, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            throw new \InvalidArgumentException('The decrypted email payload is malformed.', 0, $exception);
+        }
+
+        if (!is_array($data) || !is_string($data['email'] ?? null) || !is_int($data['expires_at'] ?? null)) {
+            throw new \InvalidArgumentException('The decrypted email payload is malformed.');
+        }
+
+        if (($this->nowProvider)() > $data['expires_at']) {
+            throw new \InvalidArgumentException('The email confirmation link has expired.');
+        }
+
+        $this->assertValidEmail($data['email']);
+
+        return $data['email'];
+    }
+
+    private function decryptLegacyPayload(string $confirmationToken, string $encryptedEmail): string
+    {
+        $decoded = base64_decode($encryptedEmail, true);
+        $ivSize = $this->getIvSize();
+        if (false === $decoded || strlen($decoded) <= $ivSize) {
+            throw new \InvalidArgumentException('The encrypted email payload is malformed.');
+        }
+
+        $decryptedEmail = openssl_decrypt(
+            substr($decoded, $ivSize),
+            $this->encryptionMode,
+            $this->deriveLegacyKey($confirmationToken),
+            0,
+            substr($decoded, 0, $ivSize),
+        );
+
+        if (false === $decryptedEmail) {
+            throw new \InvalidArgumentException('The email confirmation payload could not be decrypted.');
+        }
+
+        $email = rtrim($decryptedEmail, "\0");
+        $this->assertValidEmail($email);
+
         return $email;
+    }
+
+    private function assertToken(string $confirmationToken): void
+    {
+        if ('' === $confirmationToken) {
+            throw new \InvalidArgumentException('The user confirmation token must not be empty.');
+        }
+    }
+
+    private function assertValidEmail(string $email): void
+    {
+        if ($this->validator->validate($email, new Email())->count() > 0) {
+            throw new \InvalidArgumentException('The value is not a valid email address.');
+        }
+    }
+
+    private function getIvSize(): int
+    {
+        $ivSize = openssl_cipher_iv_length($this->encryptionMode);
+        if (false === $ivSize || $ivSize < 1) {
+            throw new \RuntimeException(sprintf(
+                'Unable to determine the IV size for cipher "%s".',
+                $this->encryptionMode,
+            ));
+        }
+
+        return $ivSize;
+    }
+
+    private function deriveEncryptionKey(string $confirmationToken): string
+    {
+        return hash('sha256', "encryption\0".$confirmationToken, true);
+    }
+
+    private function deriveMacKey(string $confirmationToken): string
+    {
+        return hash('sha256', "authentication\0".$confirmationToken, true);
+    }
+
+    private function deriveLegacyKey(string $confirmationToken): string
+    {
+        return pack('H*', hash('sha256', $confirmationToken));
+    }
+
+    private function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function base64UrlDecode(string $value): string
+    {
+        $padding = strlen($value) % 4;
+        if (0 !== $padding) {
+            $value .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode(strtr($value, '-_', '+/'), true);
+        if (false === $decoded) {
+            throw new \InvalidArgumentException('The encrypted email payload is malformed.');
+        }
+
+        return $decoded;
     }
 }

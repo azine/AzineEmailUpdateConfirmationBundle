@@ -1,87 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Azine\EmailUpdateConfirmationBundle\EventListener;
 
 use Azine\EmailUpdateConfirmationBundle\AzineEmailUpdateConfirmationEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class FlashListener implements EventSubscriberInterface
 {
-    /**
-     * @var string[]
-     */
-    private static $successMessages = array(
-        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS => 'email_update.flash.success',
-        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE => 'email_update.flash.info',
-    );
+    private const MESSAGES = [
+        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS => ['success', 'email_update.flash.success'],
+        AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE => ['info', 'email_update.flash.info'],
+    ];
 
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
-
-    /**
-     * FlashListener constructor.
-     *
-     * @param SessionInterface    $session
-     * @param TranslatorInterface $translator
-     */
-    public function __construct(SessionInterface $session, TranslatorInterface $translator)
-    {
-        $this->session = $session;
-        $this->translator = $translator;
+    public function __construct(
+        private readonly RequestStack $requestStack,
+        private readonly TranslatorInterface $translator,
+    ) {
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
-        return array(
+        return [
             AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS => 'addSuccessFlash',
             AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE => 'addInfoFlash',
+        ];
+    }
+
+    public function addSuccessFlash(object $event, string $eventName = AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS): void
+    {
+        $this->addFlashFor($eventName);
+    }
+
+    public function addInfoFlash(object $event, string $eventName = AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE): void
+    {
+        $this->addFlashFor($eventName);
+    }
+
+    private function addFlashFor(string $eventName): void
+    {
+        if (!isset(self::MESSAGES[$eventName])) {
+            throw new \InvalidArgumentException('This event does not correspond to a known flash message.');
+        }
+
+        [$type, $message] = self::MESSAGES[$eventName];
+        $this->requestStack->getSession()->getFlashBag()->add(
+            $type,
+            $this->translator->trans($message),
         );
-    }
-
-    /**
-     * @param Event  $event
-     * @param string $eventName
-     */
-    public function addSuccessFlash($event, $eventName = AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_SUCCESS)
-    {
-        if (!isset(self::$successMessages[$eventName])) {
-            throw new \InvalidArgumentException('This event does not correspond to a known flash message');
-        }
-        $this->session->getFlashBag()->add('success', $this->trans(self::$successMessages[$eventName]));
-    }
-
-    /**
-     * @param Event  $event
-     * @param string $eventName
-     */
-    public function addInfoFlash($event, $eventName = AzineEmailUpdateConfirmationEvents::EMAIL_UPDATE_INITIALIZE)
-    {
-        if (!isset(self::$successMessages[$eventName])) {
-            throw new \InvalidArgumentException('This event does not correspond to a known flash message');
-        }
-
-        $this->session->getFlashBag()->add('info', $this->trans(self::$successMessages[$eventName]));
-    }
-
-    /**
-     * @param string$message
-     * @param array $params
-     *
-     * @return string
-     */
-    private function trans($message, array $params = array())
-    {
-        return $this->translator->trans($message, $params);
     }
 }

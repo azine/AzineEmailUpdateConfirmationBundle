@@ -1,51 +1,63 @@
 services:
+    _defaults:
+        autowire: false
+        autoconfigure: false
+
     email_update_confirmation:
         class: Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmation
         arguments:
-            $router: "@router"
-            $tokenGenerator: "@fos_user.util.token_generator"
-            $mailer: "@email_update.mailer"
-            $eventDispatcher: "@event_dispatcher"
-            $validator: "@validator"
-            $redirectRoute: "%azine_email_update_confirmation.redirect_route%"
-            $mode: "%azine_email_update_confirmation.cypher_method%"
+            $router: '@router'
+            $tokenGenerator: '@fos_user.util.token_generator'
+            $mailer: '@email_update.mailer'
+            $eventDispatcher: '@event_dispatcher'
+            $validator: '@validator'
+            $redirectRoute: '%azine_email_update_confirmation.redirect_route%'
+            $mode: '%azine_email_update_confirmation.cipher_method%'
+            $confirmationTtl: '%azine_email_update_confirmation.confirmation_ttl%'
+            $allowLegacyPayloads: '%azine_email_update_confirmation.allow_legacy_payloads%'
 
-    azine.email_update.mailer:
+    Azine\EmailUpdateConfirmationBundle\Services\EmailUpdateConfirmationInterface:
+        alias: email_update_confirmation
+
+    azine.email_update.default_mailer:
         class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationMailer
         arguments:
-            $mailer: "@mailer.mailer"
-            $twig: "@twig"
+            $mailer: '@mailer'
+            $translator: '@translator'
             $parameters:
                 template: '%azine_email_update_confirmation.template%'
                 from_email: '%azine_email_update_confirmation.from_email%'
 
-    azine.email_update.twig_mailer:
-        class: Azine\EmailUpdateConfirmationBundle\Mailer\AzineEmailUpdateConfirmationTwigSwiftMailer
-        arguments:
-            $mailer: "@mailer.mailer"
-            $twig: "@twig"
-            $parameters:
-                template: '%azine_email_update_confirmation.template%'
-                from_email: '%azine_email_update_confirmation.from_email%'
+    Azine\EmailUpdateConfirmationBundle\Mailer\EmailUpdateConfirmationMailerInterface:
+        alias: email_update.mailer
 
     email_update_listener:
         class: Azine\EmailUpdateConfirmationBundle\Doctrine\EmailUpdateListener
-        arguments: ["@email_update_confirmation", "@request_stack", "@fos_user.util.canonical_fields_updater", "@email_update.mailer"]
+        arguments:
+            $emailUpdateConfirmation: '@email_update_confirmation'
+            $requestStack: '@request_stack'
+            $canonicalFieldsUpdater: '@fos_user.util.canonical_fields_updater'
+            $mailer: '@email_update.mailer'
         tags:
-            - { name: doctrine.event_listener, event: preUpdate, lazy: true }
+            - { name: doctrine.event_listener, event: onFlush, lazy: true }
+            - { name: doctrine.event_listener, event: postFlush, lazy: true }
 
     Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController:
-        class: Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController
         arguments:
-            $eventDispatcher: "@event_dispatcher"
-            $userManager: "@fos_user.user_manager"
-            $emailUpdateConfirmation: "@email_update_confirmation"
-            $translator: "@translator"
-            $canonicalFieldsUpdater: "@fos_user.util.canonical_fields_updater"
+            $eventDispatcher: '@event_dispatcher'
+            $userManager: '@fos_user.user_manager'
+            $emailUpdateConfirmation: '@email_update_confirmation'
+            $translator: '@translator'
+            $canonicalFieldsUpdater: '@fos_user.util.canonical_fields_updater'
+            $redirectRoute: '%azine_email_update_confirmation.redirect_route%'
         public: true
+        tags:
+            - { name: controller.service_arguments }
 
     email_update_flash_subscriber:
         class: Azine\EmailUpdateConfirmationBundle\EventListener\FlashListener
-        arguments: ['@session', '@translator']
+        arguments:
+            $requestStack: '@request_stack'
+            $translator: '@translator'
         tags:
             - { name: kernel.event_subscriber }

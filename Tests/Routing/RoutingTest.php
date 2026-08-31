@@ -1,42 +1,37 @@
 <?php
 
-namespace Azine\EmailUpdateConfirmationBundle\Routing;
+declare(strict_types=1);
 
+namespace Azine\EmailUpdateConfirmationBundle\Tests\Routing;
+
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
-use Symfony\Component\Routing\RouteCollection;
 
-class RoutingTest extends \PHPUnit\Framework\TestCase
+final class RoutingTest extends TestCase
 {
-    /**
-     * @dataProvider loadRoutingProvider
-     *
-     * @param string $routeName
-     * @param string $path
-     * @param array  $methods
-     */
-    public function testLoadRouting($routeName, $path, array $methods)
+    public function testCanonicalRouteDoesNotAcceptAUserControlledRedirectRoute(): void
     {
-        $locator = new FileLocator();
-        $loader = new YamlFileLoader($locator);
+        $routes = (new YamlFileLoader(new FileLocator(__DIR__.'/../../Resources/config')))
+            ->load('routing.yml');
 
-        $collection = new RouteCollection();
-        $subCollection = $loader->load(__DIR__.'/../../Resources/config/routing.yml');
-        $collection->addCollection($subCollection);
-
-        $route = $collection->get($routeName);
-        $this->assertNotNull($route, sprintf('The route "%s" should exists', $routeName));
-        $this->assertSame($path, $route->getPath());
-        $this->assertSame($methods, $route->getMethods());
+        $route = $routes->get('user_update_email_confirm');
+        self::assertNotNull($route);
+        self::assertSame('/confirm-email-update/{token}', $route->getPath());
+        self::assertSame(['GET'], $route->getMethods());
+        self::assertStringContainsString(
+            'ConfirmEmailUpdateController::confirmEmailUpdateAction',
+            (string) $route->getDefault('_controller'),
+        );
     }
 
-    /**
-     * @return array
-     */
-    public static function loadRoutingProvider()
+    public function testLegacyPendingLinksRemainRoutableButCannotChooseTheRedirect(): void
     {
-        return array(
-            array('user_update_email_confirm', '/confirm-email-update/{token}/{redirectRoute}', array('GET')),
-        );
+        $routes = (new YamlFileLoader(new FileLocator(__DIR__.'/../../Resources/config')))
+            ->load('routing.yml');
+
+        $route = $routes->get('user_update_email_confirm_legacy');
+        self::assertNotNull($route);
+        self::assertSame('/confirm-email-update/{token}/{redirectRoute}', $route->getPath());
     }
 }
