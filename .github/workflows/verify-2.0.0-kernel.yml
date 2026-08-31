@@ -22,18 +22,35 @@ jobs:
         run: |
           set -euo pipefail
           APP=/tmp/email-update-kernel
-          mkdir -p "$APP/src" "$APP/config/packages" "$APP/config/routes" "$APP/var/cache" "$APP/var/log"
+          mkdir -p "$APP/src" "$APP/config/packages" "$APP/var/cache" "$APP/var/log"
           cd "$APP"
 
-          composer init --name=azine/kernel-smoke --no-interaction
-          composer config repositories.email-update vcs https://github.com/azine/AzineEmailUpdateConfirmationBundle
-          composer require \
-            azine/emailupdateconfirmation-bundle:2.0.0 \
-            symfony/dotenv:7.4.* \
-            symfony/twig-bundle:7.4.* \
-            --no-interaction --prefer-dist
-          composer config autoload.psr-4.App\\ src/
-          composer dump-autoload
+          cat > composer.json <<'JSON'
+          {
+              "name": "azine/kernel-smoke",
+              "repositories": [
+                  {
+                      "type": "vcs",
+                      "url": "https://github.com/azine/AzineEmailUpdateConfirmationBundle"
+                  }
+              ],
+              "require": {
+                  "php": "^8.5",
+                  "azine/emailupdateconfirmation-bundle": "2.0.0",
+                  "symfony/dotenv": "7.4.*",
+                  "symfony/framework-bundle": "7.4.*",
+                  "symfony/twig-bundle": "7.4.*"
+              },
+              "autoload": {
+                  "psr-4": {
+                      "App\\\\": "src/"
+                  }
+              },
+              "minimum-stability": "stable",
+              "prefer-stable": true
+          }
+          JSON
+          composer update --no-interaction --prefer-dist
 
           cat > src/Kernel.php <<'PHP'
           <?php
