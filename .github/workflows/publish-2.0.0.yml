@@ -1,0 +1,23 @@
+name: Publish Email Update Confirmation 2.0.0
+
+on:
+  push:
+    branches: [release/publish-2.0.0]
+    paths: ['.github/workflows/publish-2.0.0.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Publish 2.0.0 tag
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a 2.0.0 775398ce36ef41f3357727c78e4e222dec2139ee -m 'PHP 8.5 / Symfony 7.4 / Symfony Mailer release'
+          git push origin 2.0.0
