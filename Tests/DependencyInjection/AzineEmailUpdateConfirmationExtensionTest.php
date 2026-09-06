@@ -23,6 +23,11 @@ final class AzineEmailUpdateConfirmationExtensionTest extends TestCase
         self::assertSame('fos_user_profile_show', $container->getParameter('azine_email_update_confirmation.redirect_route'));
         self::assertSame('azine.email_update.default_mailer', (string) $container->getAlias('email_update.mailer'));
 
+        $controller = $container->getDefinition(\Azine\EmailUpdateConfirmationBundle\Controller\ConfirmEmailUpdateController::class);
+        self::assertTrue($controller->isAutowired(), 'AbstractController requires its setContainer method to be wired.');
+        self::assertTrue($controller->isAutoconfigured(), 'AbstractController must register as a service subscriber.');
+        self::assertTrue($controller->hasTag('controller.service_arguments'));
+
         $listener = $container->getDefinition('email_update_listener');
         $events = array_column($listener->getTags()['doctrine.event_listener'], 'event');
         self::assertSame(['onFlush', 'postFlush'], $events);
