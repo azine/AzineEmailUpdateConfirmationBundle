@@ -4,7 +4,7 @@ Requires confirmation before a FOSUserBundle user's changed email address is per
 
 ## Requirements
 
-- PHP 8.5
+- PHP 8.5.12+
 - Symfony 7.4
 - Doctrine ORM 3.6
 - FOSUserBundle 4.1

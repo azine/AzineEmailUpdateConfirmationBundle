@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   tests:
-    name: "PHP 8.5 / Dependencies ${{ matrix.dependencies }}"
+    name: "PHP 8.5.12 / Dependencies ${{ matrix.dependencies }}"
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -28,7 +28,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.5.12'
           tools: composer:v2
           coverage: none
           extensions: ctype, fileinfo, filter, iconv, intl, json, mailparse, mbstring, openssl, tokenizer, xml

@@ -23,7 +23,7 @@
         }
     ],
     "require": {
-        "php": "^8.5",
+        "php": "^8.5.12",
         "ext-json": "*",
         "ext-openssl": "*",
         "doctrine/orm": "^3.6",
